@@ -1,4 +1,3 @@
-
 const express = require('express')
 const {
     createResumeFromText,
@@ -7,13 +6,16 @@ const {
     getResume,
     updateResume,
     deleteResume,
-    analyzeResume
+    analyzeResume,
+    optimizeResume,
+    downloadOptimizedResume
 } = require('../controllers/resume.controller')
 const { authUser } = require('../middlewares/auth.middleware')
 const {
     validateResumeText,
     validateResumeFile,
-    validateResumeAnalysis
+    validateResumeAnalysis,
+    validateResumeOptimization
 } = require('../middlewares/validation.middleware')
 const { uploadResume } = require('../middlewares/upload.middleware')
 const { aiAnalysisRateLimit, uploadRateLimit } = require('../middlewares/rateLimit.middleware')
@@ -28,6 +30,11 @@ router.get('/', getResumes)
 router.get('/:id', getResume)
 router.put('/:id', validateResumeText, updateResume)
 router.delete('/:id', deleteResume)
+
+// Two-step AI process
 router.post('/:id/analyze', aiAnalysisRateLimit, validateResumeAnalysis, analyzeResume)
+router.post('/:id/optimize', aiAnalysisRateLimit, validateResumeOptimization, optimizeResume)
+router.get('/:id/download/:optimizationId', downloadOptimizedResume)
 
 module.exports = router
+

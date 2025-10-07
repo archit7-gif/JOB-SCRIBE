@@ -1,5 +1,3 @@
-
-
 const userModel = require('../models/user.model')
 
 const getAllUsers = async (req, res) => {
@@ -37,14 +35,28 @@ const getUser = async (req, res) => {
 
 const updateUserStatus = async (req, res) => {
     try {
+        // Prevent admin from deactivating themselves
+        if (req.params.userId === req.user.id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Cannot modify your own account status" 
+            })
+        }
+
         const { isActive } = req.body
         const user = await userModel.findByIdAndUpdate(
             req.params.userId,
             { isActive },
             { new: true }
         ).select("-password")
+        
         if (!user) return res.status(404).json({ success: false, message: "User not found" })
-        res.status(200).json({ success: true, data: user })
+        
+        res.status(200).json({ 
+            success: true, 
+            message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+            data: user 
+        })
     } catch (error) {
         res.status(500).json({ success: false, message: "Could not update user status" })
     }
@@ -52,9 +64,21 @@ const updateUserStatus = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     try {
+        // Prevent admin from deleting themselves
+        if (req.params.userId === req.user.id.toString()) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Cannot delete your own account" 
+            })
+        }
+
         const user = await userModel.findByIdAndDelete(req.params.userId)
         if (!user) return res.status(404).json({ success: false, message: "User not found" })
-        res.status(200).json({ success: true, message: "User deleted" })
+        
+        res.status(200).json({ 
+            success: true, 
+            message: "User deleted successfully" 
+        })
     } catch (error) {
         res.status(500).json({ success: false, message: "Could not delete user" })
     }
@@ -63,8 +87,17 @@ const deleteUser = async (req, res) => {
 const getSystemStats = async (req, res) => {
     try {
         const users = await userModel.countDocuments()
-        // You can add more stats (jobs, resumes etc) if needed
-        res.status(200).json({ success: true, stats: { users } })
+        const activeUsers = await userModel.countDocuments({ isActive: true })
+        const inactiveUsers = await userModel.countDocuments({ isActive: false })
+        
+        res.status(200).json({ 
+            success: true, 
+            stats: { 
+                totalUsers: users,
+                activeUsers,
+                inactiveUsers
+            } 
+        })
     } catch (error) {
         res.status(500).json({ success: false, message: "Could not fetch stats" })
     }
@@ -77,3 +110,4 @@ module.exports = {
     deleteUser,
     getSystemStats
 }
+
