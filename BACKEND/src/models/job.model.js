@@ -18,5 +18,9 @@ const jobSchema = new mongoose.Schema({
     timestamps: true
 })
 
+jobSchema.index({ user: 1, updatedAt: -1 })
+jobSchema.index({ user: 1, status: 1 })
+jobSchema.index({ user: 1, company: 'text', title: 'text' }) // Full-text search
+
 const jobModel = mongoose.model('job', jobSchema)
 module.exports = jobModel

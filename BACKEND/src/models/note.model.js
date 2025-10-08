@@ -12,9 +12,13 @@ const noteSchema = new mongoose.Schema({
     timestamps: true
 })
 
+noteSchema.index({ user: 1, jobId: 1 })
+noteSchema.index({ user: 1, createdAt: -1 })
+
+
+
+
 const noteModel = mongoose.model('note', noteSchema)
-
-
 
 
 module.exports = noteModel

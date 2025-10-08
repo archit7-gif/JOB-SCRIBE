@@ -6,139 +6,101 @@ const pdfGenerator = require('../services/pdfGenerator.service')
 const crypto = require('crypto')
 const fs = require('fs')
 
-const generateContentHash = (content) =>
-    crypto.createHash('sha256').update(content.trim().toLowerCase()).digest('hex')
+const hashContent = (content) => crypto.createHash('sha256').update(content.trim().toLowerCase()).digest('hex')
+
+const handleValidationErrors = (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        res.status(400).json({ 
+            success: false, 
+            message: "Validation failed",
+            errors: errors.array().map(({ param, msg }) => ({ field: param, message: msg }))
+        })
+        return true  // Return true = validation failed
+    }
+    return false  // Return false = validation passed
+}
 
 const createResumeFromText = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Validation failed",
-                errors: errors.array().map(err => ({
-                    field: err.param,
-                    message: err.msg
-                }))
-            })
-        }
+        if (handleValidationErrors(req, res)) return
 
-        const contentHash = generateContentHash(req.body.content)
+        const { title, content } = req.body
+        const contentHash = hashContent(content)
+        const userId = req.user._id  // FIXED: changed from req.user.id
 
-        const existingResume = await resumeModel.findOne({
-            user: req.user.id,
-            contentHash: contentHash
-        })
-        if (existingResume) {
+        const existing = await resumeModel.findOne({ user: userId, contentHash }).lean()
+        if (existing) {
             return res.status(200).json({
                 success: true,
                 message: "Resume with identical content already exists",
-                data: existingResume,
+                data: existing,
                 isDuplicate: true
             })
         }
 
-        const resume = await resumeModel.create({
-            user: req.user.id,
-            title: req.body.title,
-            content: req.body.content,
-            contentHash,
-            type: 'text'
-        })
+        const resume = await resumeModel.create({ user: userId, title, content, contentHash, type: 'text' })
         res.status(201).json({ success: true, message: "Resume created", data: resume })
     } catch (error) {
-        console.error('Create resume error:', error)
         res.status(500).json({ success: false, message: "Could not create resume" })
     }
 }
 
 const createResumeFromFile = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Validation failed",
-                errors: errors.array().map(err => ({
-                    field: err.param,
-                    message: err.msg
-                }))
-            })
-        }
+        if (handleValidationErrors(req, res)) return
+        if (!req.file) return res.status(400).json({ success: false, message: "No file uploaded" })
 
-        if (!req.file)
-            return res.status(400).json({ success: false, message: "No file uploaded" })
-
+        const { title } = req.body
+        const { buffer, path: filePath, mimetype, originalname, size } = req.file
         let extractedText = ""
+
         try {
-            let fileBuffer = req.file.buffer 
-                ? req.file.buffer 
-                : req.file.path ? fs.readFileSync(req.file.path) : null
+            const fileBuffer = buffer || (filePath && fs.readFileSync(filePath))
+            if (!fileBuffer) throw new Error("No file buffer")
 
-            if (!fileBuffer) throw new Error("Upload error: No file buffer available")
-
-            if (req.file.mimetype === 'application/pdf') {
-                extractedText = await fileParserService.extractPDFText(fileBuffer)
-            } else if (
-                req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            ) {
-                extractedText = await fileParserService.extractDOCXText(fileBuffer)
-            } else {
-                return res.status(400).json({
-                    success: false,
-                    message: "Only PDF and DOCX files allowed"
-                })
-            }
+            extractedText = mimetype === 'application/pdf'
+                ? await fileParserService.extractPDFText(fileBuffer)
+                : await fileParserService.extractDOCXText(fileBuffer)
         } catch (parseError) {
-            return res.status(400).json({
-                success: false,
-                message: "Could not extract text from file. Please ensure the file is not corrupted."
-            })
+            return res.status(400).json({ success: false, message: "Could not extract text from file" })
         } finally {
-            if (req.file.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path)
+            if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath)
         }
 
-        const contentHash = generateContentHash(extractedText)
+        const contentHash = hashContent(extractedText)
+        const userId = req.user._id  // FIXED: changed from req.user.id
 
-        const existingResume = await resumeModel.findOne({
-            user: req.user.id,
-            contentHash: contentHash
-        })
-        if (existingResume) {
+        const existing = await resumeModel.findOne({ user: userId, contentHash }).lean()
+        if (existing) {
             return res.status(200).json({
                 success: true,
-                message: "Resume with identical extracted content already exists",
-                data: existingResume,
+                message: "Resume with identical content already exists",
+                data: existing,
                 isDuplicate: true
             })
         }
 
         const resume = await resumeModel.create({
-            user: req.user.id,
-            title: req.body.title,
-            content: extractedText,
-            contentHash: contentHash,
-            type: 'file',
-            fileName: req.file.originalname,
-            fileSize: req.file.size,
-            mimeType: req.file.mimetype
+            user: userId, title, content: extractedText, contentHash, type: 'file',
+            fileName: originalname, fileSize: size, mimeType: mimetype
         })
 
         res.status(201).json({ success: true, message: "Resume created from file", data: resume })
     } catch (error) {
-        if (req.file && req.file.path && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path)
-        }
-        console.error('Create resume from file error:', error)
+        if (req.file?.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path)
         res.status(500).json({ success: false, message: "Error creating resume from file" })
     }
 }
 
 const getResumes = async (req, res) => {
     try {
-        const resumes = await resumeModel.find({ user: req.user.id })
-            .select("-content -aiAnalyses -optimizations")
+        const resumes = await resumeModel
+            .find({ user: req.user._id })  // FIXED: changed from req.user.id
+            .select("title type fileName fileSize mimeType createdAt updatedAt")
             .sort({ updatedAt: -1 })
+            .lean()
+        
         res.status(200).json({ success: true, data: resumes })
     } catch (error) {
         res.status(500).json({ success: false, message: "Could not fetch resumes" })
@@ -147,61 +109,38 @@ const getResumes = async (req, res) => {
 
 const getResume = async (req, res) => {
     try {
-        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user.id })
-        if (!resume)
-            return res.status(404).json({ success: false, message: "Resume not found" })
+        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id }).lean()  // FIXED
+        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
         res.status(200).json({ success: true, data: resume })
     } catch (error) {
         res.status(500).json({ success: false, message: "Could not fetch resume" })
     }
 }
 
-// STEP 1: Analyze and get suggestions
 const analyzeResume = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Validation failed",
-                errors: errors.array().map(err => ({
-                    field: err.param,
-                    message: err.msg
-                }))
-            })
-        }
+        if (handleValidationErrors(req, res)) return
 
-        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user.id })
-        if (!resume)
-            return res.status(404).json({ success: false, message: "Resume not found" })
+        const { jobDescription, jobTitle = "Job Analysis" } = req.body
+        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id })  // FIXED
+        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
 
-        const jobDescHash = crypto.createHash('sha256')
-            .update(req.body.jobDescription.trim().toLowerCase())
-            .digest('hex')
-
-        // Check cache
+        const jobDescHash = hashContent(jobDescription)
         const existingAnalysis = resume.aiAnalyses?.find(a => a.jobDescHash === jobDescHash)
+        
         if (existingAnalysis) {
             return res.status(200).json({
                 success: true,
                 message: "Analysis retrieved from cache",
-                data: {
-                    resumeId: resume._id,
-                    analysisId: existingAnalysis._id,
-                    analysis: existingAnalysis,
-                    fromCache: true
-                }
+                data: { resumeId: resume._id, analysisId: existingAnalysis._id, analysis: existingAnalysis, fromCache: true }
             })
         }
 
-        // Generate new analysis
-        const analysis = await aiService.analyzeResumeForJob(resume.content, req.body.jobDescription)
+        const analysis = await aiService.analyzeResumeForJob(resume.content, jobDescription)
 
-        resume.aiAnalyses = resume.aiAnalyses || []
         const newAnalysis = {
-            jobDescription: req.body.jobDescription.substring(0, 500),
-            jobDescHash,
-            jobTitle: req.body.jobTitle || "Job Analysis",
+            jobDescription: jobDescription.substring(0, 500),
+            jobDescHash, jobTitle,
             matchScore: analysis.matchScore || 0,
             strengths: analysis.strengths || [],
             suggestions: analysis.suggestions || [],
@@ -209,101 +148,53 @@ const analyzeResume = async (req, res) => {
             sectionsToImprove: analysis.sectionsToImprove || [],
             createdAt: new Date()
         }
-        resume.aiAnalyses.unshift(newAnalysis)
         
-        if (resume.aiAnalyses.length > 10) {
-            resume.aiAnalyses = resume.aiAnalyses.slice(0, 10)
-        }
+        resume.aiAnalyses = resume.aiAnalyses || []
+        resume.aiAnalyses.unshift(newAnalysis)
+        if (resume.aiAnalyses.length > 10) resume.aiAnalyses = resume.aiAnalyses.slice(0, 10)
         await resume.save()
 
         res.status(200).json({
             success: true,
             message: "Resume analyzed successfully",
-            data: {
-                resumeId: resume._id,
-                analysisId: resume.aiAnalyses._id,
-                analysis: newAnalysis,
-                fromCache: false
-            }
+            data: { resumeId: resume._id, analysisId: resume.aiAnalyses[0]._id, analysis: newAnalysis, fromCache: false }
         })
     } catch (error) {
-        console.error('Analyze resume error:', error)
         res.status(500).json({ success: false, message: "AI analysis failed" })
     }
 }
 
-// STEP 2: Generate optimized resume (requires analysis first)
 const optimizeResume = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Validation failed",
-                errors: errors.array().map(err => ({
-                    field: err.param,
-                    message: err.msg
-                }))
-            })
-        }
+        if (handleValidationErrors(req, res)) return
 
-        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user.id })
-        if (!resume)
-            return res.status(404).json({ success: false, message: "Resume not found" })
+        const { analysisId } = req.body
+        if (!analysisId) return res.status(400).json({ success: false, message: "analysisId required" })
 
-        // analysisId must be provided
-        if (!req.body.analysisId) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "analysisId required. Please analyze resume first." 
-            })
-        }
+        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id })  // FIXED
+        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
 
-        const analysis = resume.aiAnalyses?.find(a => a._id.toString() === req.body.analysisId)
-        if (!analysis) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "Analysis not found. Please analyze resume first." 
-            })
-        }
+        const analysis = resume.aiAnalyses?.find(a => a._id.toString() === analysisId)
+        if (!analysis) return res.status(404).json({ success: false, message: "Analysis not found" })
 
-        const jobDescHash = analysis.jobDescHash
-
-        // Check if already optimized
-        const existingOptimization = resume.optimizations?.find(o => o.jobDescHash === jobDescHash)
-        if (existingOptimization) {
+        const { jobDescHash } = analysis
+        const existingOpt = resume.optimizations?.find(o => o.jobDescHash === jobDescHash)
+        
+        if (existingOpt) {
             return res.status(200).json({
                 success: true,
                 message: "Optimization retrieved from cache",
-                data: {
-                    resumeId: resume._id,
-                    optimizationId: existingOptimization._id,
-                    optimization: existingOptimization,
-                    fromCache: true
-                }
+                data: { resumeId: resume._id, optimizationId: existingOpt._id, optimization: existingOpt, fromCache: true }
             })
         }
 
-        // Generate optimization
-        const result = await aiService.generateResumeOptimization(
-            resume.content,
-            analysis.jobDescription,
-            analysis.suggestions
-        )
+        const result = await aiService.generateResumeOptimization(resume.content, analysis.jobDescription, analysis.suggestions)
+        if (!result.success) return res.status(500).json({ success: false, message: "Optimization failed" })
 
-        if (!result.success) {
-            return res.status(500).json({ 
-                success: false, 
-                message: "Optimization failed. Please try again." 
-            })
-        }
-
-        // Store optimization
-        resume.optimizations = resume.optimizations || []
-        const newOptimization = {
+        const newOpt = {
             analysisId: analysis._id,
             jobDescription: analysis.jobDescription,
-            jobDescHash: jobDescHash,
+            jobDescHash,
             jobTitle: analysis.jobTitle,
             originalContent: resume.content,
             optimizedContent: result.optimizedContent,
@@ -311,10 +202,9 @@ const optimizeResume = async (req, res) => {
             createdAt: new Date()
         }
         
-        resume.optimizations.unshift(newOptimization)
-        if (resume.optimizations.length > 10) {
-            resume.optimizations = resume.optimizations.slice(0, 10)
-        }
+        resume.optimizations = resume.optimizations || []
+        resume.optimizations.unshift(newOpt)
+        if (resume.optimizations.length > 10) resume.optimizations = resume.optimizations.slice(0, 10)
         await resume.save()
 
         res.status(200).json({
@@ -322,113 +212,66 @@ const optimizeResume = async (req, res) => {
             message: "Resume optimized successfully",
             data: {
                 resumeId: resume._id,
-                optimizationId: resume.optimizations._id,
+                optimizationId: resume.optimizations[0]._id,
                 optimization: {
-                    jobTitle: newOptimization.jobTitle,
-                    optimizedContent: newOptimization.optimizedContent,
-                    appliedSuggestions: newOptimization.appliedSuggestions,
-                    createdAt: newOptimization.createdAt
+                    jobTitle: newOpt.jobTitle,
+                    optimizedContent: newOpt.optimizedContent,
+                    appliedSuggestions: newOpt.appliedSuggestions,
+                    createdAt: newOpt.createdAt
                 },
                 fromCache: false
             }
         })
     } catch (error) {
-        console.error('Optimize resume error:', error)
         res.status(500).json({ success: false, message: "Resume optimization failed" })
     }
 }
 
-// Download optimized resume
 const downloadOptimizedResume = async (req, res) => {
     try {
-        const resume = await resumeModel.findOne({ 
-            _id: req.params.id, 
-            user: req.user.id 
-        })
-        
-        if (!resume)
-            return res.status(404).json({ success: false, message: "Resume not found" })
+        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id }).lean()  // FIXED
+        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
 
-        const optimization = resume.optimizations?.find(
-            o => o._id.toString() === req.params.optimizationId
-        )
+        const opt = resume.optimizations?.find(o => o._id.toString() === req.params.optimizationId)
+        if (!opt) return res.status(404).json({ success: false, message: "Optimization not found" })
 
-        if (!optimization)
-            return res.status(404).json({ success: false, message: "Optimization not found" })
-
-        // Generate PDF
-        const pdfBuffer = await pdfGenerator.generateResumePDFBuffer(
-            optimization.optimizedContent
-        )
-
+        const pdfBuffer = await pdfGenerator.generateResumePDFBuffer(opt.optimizedContent)
         const filename = `${resume.title.replace(/[^a-z0-9]/gi, '_')}_optimized.pdf`
-        res.setHeader('Content-Type', 'application/pdf')
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-        res.setHeader('Content-Length', pdfBuffer.length)
-
-        res.send(pdfBuffer)
         
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+            'Content-Length': pdfBuffer.length
+        }).send(pdfBuffer)
     } catch (error) {
-        console.error('Download optimized resume error:', error)
         res.status(500).json({ success: false, message: "Failed to generate download" })
     }
 }
 
 const updateResume = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                success: false, 
-                message: "Validation failed",
-                errors: errors.array().map(err => ({
-                    field: err.param,
-                    message: err.msg
-                }))
-            })
-        }
+        if (handleValidationErrors(req, res)) return
 
+        const { title, content } = req.body
         const resume = await resumeModel.findOneAndUpdate(
-            { _id: req.params.id, user: req.user.id },
-            {
-                title: req.body.title,
-                content: req.body.content,
-                contentHash: generateContentHash(req.body.content),
-                // Clear analyses and optimizations on content update
-                aiAnalyses: [],
-                optimizations: []
-            },
+            { _id: req.params.id, user: req.user._id },  // FIXED
+            { title, content, contentHash: hashContent(content), aiAnalyses: [], optimizations: [] },
             { new: true }
         )
-        if (!resume)
-            return res.status(404).json({ success: false, message: "Resume not found" })
         
-        res.status(200).json({ 
-            success: true, 
-            message: "Resume updated. Previous analyses cleared.", 
-            data: resume 
-        })
+        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
+        res.status(200).json({ success: true, message: "Resume updated", data: resume })
     } catch (error) {
-        console.error('Update resume error:', error)
         res.status(500).json({ success: false, message: "Could not update resume" })
     }
 }
 
 const deleteResume = async (req, res) => {
     try {
-        const resume = await resumeModel.findOneAndDelete({
-            _id: req.params.id,
-            user: req.user.id
-        })
-        if (!resume)
-            return res.status(404).json({ success: false, message: "Resume not found" })
-        
-        res.status(200).json({ 
-            success: true, 
-            message: "Resume and all associated analyses/optimizations deleted" 
-        })
+        const resume = await resumeModel.findOneAndDelete({ _id: req.params.id, user: req.user._id })  // FIXED
+        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
+        res.status(200).json({ success: true, message: "Resume deleted" })
     } catch (error) {
-        console.error('Delete resume error:', error)
         res.status(500).json({ success: false, message: "Could not delete resume" })
     }
 }
@@ -444,4 +287,3 @@ module.exports = {
     updateResume,
     deleteResume
 }
-

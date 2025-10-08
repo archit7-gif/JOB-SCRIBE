@@ -8,12 +8,12 @@ const {
     deleteUser,
     getSystemStats
 } = require('../controllers/admin.controller')
-const { authAdmin } = require('../middlewares/auth.middleware')
+const { authAdmin, authUser } = require('../middlewares/auth.middleware')
 const { validateUserStatusUpdate } = require('../middlewares/validation.middleware')
 
 const router = express.Router()
 
-router.use(authAdmin)
+router.use(authUser,authAdmin)
 
 router.get('/users', getAllUsers)
 router.get('/users/:userId', getUser)

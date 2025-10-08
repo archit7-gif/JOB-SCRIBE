@@ -5,17 +5,31 @@ const jwt = require('jsonwebtoken')
 const { validationResult } = require('express-validator')
 
 const JWT_EXPIRE = process.env.JWT_EXPIRE || "24h"
+const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000
+
+const handleValidation = (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ success: false, message: "Validation failed" })
+    }
+}
+
+const setCookie = (res, token) => {
+    res.cookie('token', token, {
+        httpOnly: true,
+        maxAge: COOKIE_MAX_AGE,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
+    })
+}
 
 const registerUser = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ success: false, message: "Validation failed" })
-        }
+        if (handleValidation(req, res)) return
 
         const { email, password, fullname } = req.body
 
-        const existing = await userModel.findOne({ email })
+        const existing = await userModel.findOne({ email: email.toLowerCase() }).lean()
         if (existing) {
             return res.status(409).json({ success: false, message: "User already exists" })
         }
@@ -24,19 +38,11 @@ const registerUser = async (req, res) => {
         const user = await userModel.create({
             email: email.toLowerCase(),
             password: hash,
-            fullname: {
-                firstname: fullname.firstname,
-                lastname: fullname.lastname
-            }
+            fullname
         })
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRE })
-        res.cookie('token', token, {
-            httpOnly: true,
-            maxAge: 1000 * 60 * 60 * 24,
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production'
-        })
+        setCookie(res, token)
 
         res.status(201).json({
             success: true,
@@ -44,8 +50,10 @@ const registerUser = async (req, res) => {
             user: {
                 id: user._id,
                 email: user.email,
-                fullname: user.fullname
-            }
+                fullname: user.fullname,
+                role: user.role
+            },
+            token
         })
     } catch (error) {
         res.status(500).json({ success: false, message: "Registration failed" })
@@ -54,13 +62,10 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     try {
-        const errors = validationResult(req)
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ success: false, message: "Validation failed" })
-        }
+        if (handleValidation(req, res)) return
 
         const { email, password } = req.body
-        const user = await userModel.findOne({ email: email.toLowerCase() })
+        const user = await userModel.findOne({ email: email.toLowerCase() }).select('+password')
 
         if (!user || !user.isActive) {
             return res.status(401).json({ success: false, message: "Invalid credentials" })
@@ -72,12 +77,7 @@ const loginUser = async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: JWT_EXPIRE })
-        res.cookie('token', token, {
-            httpOnly: true,
-            maxAge: 1000 * 60 * 60 * 24,
-            sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production'
-        })
+        setCookie(res, token)
 
         res.status(200).json({
             success: true,
@@ -87,7 +87,8 @@ const loginUser = async (req, res) => {
                 email: user.email,
                 fullname: user.fullname,
                 role: user.role
-            }
+            },
+            token
         })
     } catch (error) {
         res.status(500).json({ success: false, message: "Login failed" })
@@ -96,15 +97,12 @@ const loginUser = async (req, res) => {
 
 const getMe = async (req, res) => {
     try {
-        const user = await userModel.findById(req.user.id).select("-password")
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" })
-        }
-        res.status(200).json({ success: true, user })
+        res.status(200).json({ success: true, user: req.user })
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to fetch user" })
     }
 }
+
 
 const logoutUser = async (req, res) => {
     res.clearCookie("token")

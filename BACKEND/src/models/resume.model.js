@@ -40,6 +40,13 @@ const resumeSchema = new mongoose.Schema({
 
 resumeSchema.index({ user: 1, contentHash: 1 })
 
+// After schema definition, before model creation
+resumeSchema.index({ user: 1, updatedAt: -1 }) // Fast user resume list sorting
+resumeSchema.index({ user: 1, type: 1 }) // Filter by type
+resumeSchema.index({ 'aiAnalyses.jobDescHash': 1 }) // Fast cache lookup
+resumeSchema.index({ 'optimizations.jobDescHash': 1 }) // Fast optimization lookup
+
+
 const resumeModel = mongoose.model('resume', resumeSchema)
 
 
