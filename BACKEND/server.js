@@ -15,3 +15,5 @@ ConnectDB()
 initSocketServer(httpServer)
 
 httpServer.listen(PORT, () => {console.log(`🚀 JobScribe server running on PORT ${PORT}`)})
+
+// just for commit
