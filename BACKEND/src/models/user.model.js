@@ -17,7 +17,15 @@ const userSchema = new mongoose.Schema({
     },
     password: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+
+    profilePicture: {
+    url: { type: String,
+    default: null },
+    fileId: {
+    type: String,
+    default: null }
+    }
 }, {
     timestamps: true
 })

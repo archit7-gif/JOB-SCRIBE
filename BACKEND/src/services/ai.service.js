@@ -123,5 +123,6 @@ Return ONLY the optimized resume text. No JSON, no markdown.`
     }
 }
 
+
 module.exports = new AIService()
 

@@ -20,6 +20,7 @@
     "express-rate-limit": "^8.1.0",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
+    "imagekit": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.11.0",
     "marked": "^16.3.0",
