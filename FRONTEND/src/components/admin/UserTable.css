@@ -1,0 +1,25 @@
+
+.user-table {
+  width: 100%;
+}
+
+.user-table-header {
+  margin-bottom: 1.5rem;
+}
+
+.user-list {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .user-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1200px) {
+  .user-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

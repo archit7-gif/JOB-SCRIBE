@@ -1,0 +1,38 @@
+
+
+.add-job-page {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.add-job-card {
+  padding: 2rem;
+}
+
+.form-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.5rem 0;
+}
+
+.form-page-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .add-job-page {
+    padding: 1rem;
+  }
+
+  .add-job-card {
+    padding: 1.5rem;
+  }
+
+  .form-page-title {
+    font-size: 1.5rem;
+  }
+}

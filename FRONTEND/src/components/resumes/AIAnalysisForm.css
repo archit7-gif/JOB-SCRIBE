@@ -1,0 +1,14 @@
+
+.ai-analysis-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.analysis-note {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0;
+  font-style: italic;
+}
