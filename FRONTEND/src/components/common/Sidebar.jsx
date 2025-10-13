@@ -1,49 +1,62 @@
-import { useNavigate } from 'react-router-dom'
-import { IoLocationOutline, IoCalendarOutline, IoLinkOutline } from 'react-icons/io5'
-import { formatDate } from '../../utils/formatters'
-import JobStatusBadge from './JobStatusBadge'
-import './JobCard.css'
+import { NavLink } from 'react-router-dom'
+import { useSelector } from 'react-redux'
+import { 
+  IoGrid, 
+  IoBriefcase, 
+  IoDocument, 
+  IoCreate, 
+  IoPerson,
+  IoShield,
+  IoLogOut
+} from 'react-icons/io5'
+import './Sidebar.css'
 
-const JobCard = ({ job }) => {
-  const navigate = useNavigate()
+const Sidebar = ({ isOpen, onClose, onLogout }) => {
+  const { user } = useSelector((state) => state.auth)
+
+  const menuItems = [
+    { path: '/dashboard', icon: <IoGrid />, label: 'Dashboard' },
+    { path: '/jobs', icon: <IoBriefcase />, label: 'Jobs' },
+    { path: '/resumes', icon: <IoDocument />, label: 'Resumes' },
+    { path: '/notes', icon: <IoCreate />, label: 'Notes' },
+    { path: '/profile', icon: <IoPerson />, label: 'Profile' }
+  ]
+
+  if (user?.role === 'admin') {
+    menuItems.push({ path: '/admin', icon: <IoShield />, label: 'Admin' })
+  }
 
   return (
-    <div className="job-card" onClick={() => navigate(`/jobs/${job._id}`)}>
-      <div className="job-card-header">
-        <h3 className="job-card-title">{job.title}</h3>
-        <JobStatusBadge status={job.status} />
-      </div>
+    <>
+      <aside className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+        <nav className="sidebar-nav">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => 
+                `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`
+              }
+              onClick={onClose}
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              <span className="sidebar-label">{item.label}</span>
+            </NavLink>
+          ))}
 
-      <p className="job-card-company">{job.company}</p>
-
-      {job.location && (
-        <div className="job-card-meta">
-          <IoLocationOutline size={16} />
-          <span>{job.location}</span>
-        </div>
-      )}
-
-      {job.description && (
-        <p className="job-card-description">
-          {job.description.substring(0, 120)}
-          {job.description.length > 120 ? '...' : ''}
-        </p>
-      )}
-
-      <div className="job-card-footer">
-        <div className="job-card-date">
-          <IoCalendarOutline size={14} />
-          <span>{formatDate(job.updatedAt)}</span>
-        </div>
-        {job.link && (
-          <div className="job-card-link">
-            <IoLinkOutline size={14} />
-            <span>View Posting</span>
-          </div>
-        )}
-      </div>
-    </div>
+          <button className="sidebar-link sidebar-logout" onClick={onLogout}>
+            <span className="sidebar-icon"><IoLogOut /></span>
+            <span className="sidebar-label">Logout</span>
+          </button>
+        </nav>
+      </aside>
+      
+      {/* Overlay renders AFTER sidebar for correct z-index stacking */}
+      {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
+    </>
   )
 }
 
-export default JobCard
+export default Sidebar
+
+

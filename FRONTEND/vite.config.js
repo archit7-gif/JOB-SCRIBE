@@ -1,8 +1,5 @@
-
-
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { meta } from '@eslint/js'
 
 export default defineConfig({
   plugins: [react()],
@@ -10,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: meta.env.VITE_API_URL || 'http://localhost:3000',
+        target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false
       }
@@ -21,4 +18,5 @@ export default defineConfig({
     sourcemap: false
   }
 })
+
 
