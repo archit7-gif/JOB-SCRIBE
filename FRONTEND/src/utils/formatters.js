@@ -1,4 +1,3 @@
-
 // Format file size
 export const formatFileSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 Bytes'
@@ -16,12 +15,17 @@ export const formatDate = (date) => {
   
   const d = new Date(date)
   const now = new Date()
-  const diffTime = Math.abs(now - d)
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  // Reset time to midnight for accurate day comparison
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const compareDate = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  
+  const diffTime = today - compareDate
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
   
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
-  if (diffDays < 7) return `${diffDays} days ago`
+  if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`
   
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }

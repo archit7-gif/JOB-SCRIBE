@@ -25,6 +25,7 @@ import AddJob from './pages/protected/AddJob'
 import ResumesList from './pages/protected/ResumesList'
 import ResumeDetail from './pages/protected/ResumeDetail'
 import NotesList from './pages/protected/NotesList'
+import NoteDetail from './pages/protected/NoteDetail'
 import Profile from './pages/protected/Profile'
 import AdminDashboard from './pages/protected/AdminDashboard'
 
@@ -198,6 +199,15 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              {/* ADD THIS - Note Detail Route */}
+<Route 
+  path="/notes/:id" 
+  element={
+    <ProtectedRoute>
+      <NoteDetail />
+    </ProtectedRoute>
+  } 
+/>
 
               {/* Profile Route */}
               <Route 

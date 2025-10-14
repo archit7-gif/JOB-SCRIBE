@@ -89,20 +89,14 @@ const Dashboard = () => {
       <div className="dashboard-header">
         <div>
           <h1 className="dashboard-title">
-            Welcome back, {user?.fullname?.firstname || 'User'}! 👋
+            Welcome back, {user?.fullname?.firstname || 'User'} ! 
           </h1>
           <p className="dashboard-subtitle">
             Here's what's happening with your job search
           </p>
         </div>
         <div className="dashboard-actions">
-          <Button 
-            variant="primary" 
-            onClick={() => navigate('/jobs/add')}
-            icon={<IoAdd />}
-          >
-            Add Job
-          </Button>
+
         </div>
       </div>
 

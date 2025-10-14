@@ -25,7 +25,7 @@ const Welcome = () => {
 
       {/* How It Works Section */}
       <section className="how-it-works-section">
-        <h2 className="section-title">How It Works</h2>
+      
         <div className="steps-grid">
           <div className="step-card">
             <div className="step-icon step-icon-1">

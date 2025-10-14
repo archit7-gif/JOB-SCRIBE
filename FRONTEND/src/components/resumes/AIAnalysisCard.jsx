@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import { IoChevronDown, IoChevronUp, IoTrophy, IoWarning, IoKey, IoConstruct } from 'react-icons/io5'
+import Button from '../common/Button'  // ADD THIS LINE
 import ProgressBar from '../common/ProgressBar'
 import { formatDate } from '../../utils/formatters'
 import './AIAnalysisCard.css'
