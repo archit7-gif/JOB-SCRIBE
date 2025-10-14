@@ -51,3 +51,4 @@ JobScribe is a comprehensive job application tracking platform with AI-powered r
 
 1. **Clone and install dependencies**
 
+
