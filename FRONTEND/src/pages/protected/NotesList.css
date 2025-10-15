@@ -11,6 +11,76 @@
   gap: 1.25rem;
 }
 
+/* Add to existing file */
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.edit-note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.edit-note-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-note-form .form-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.edit-note-form .form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.edit-note-form .form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.1);
+}
+
+.edit-note-form .form-input-error {
+  border-color: var(--color-danger);
+}
+
+.edit-note-form .form-error {
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+  margin: 0;
+}
+
+.edit-note-form textarea.form-input {
+  resize: vertical;
+  min-height: 200px;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions button {
+    flex: 1;
+  }
+}
+
+
 @media (max-width: 768px) {
   .notes-page {
     padding: 1rem;

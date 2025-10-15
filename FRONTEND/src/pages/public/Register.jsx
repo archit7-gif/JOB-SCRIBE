@@ -16,14 +16,19 @@ const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { loading, isAuthenticated } = useSelector((state) => state.auth)
+  const { loading, isAuthenticated, user } = useSelector((state) => state.auth)  // ADD user
   const password = watch('password')
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard')
+    if (isAuthenticated && user) {
+      // Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, user, navigate])  // ADD user to dependencies
 
   const onSubmit = async (data) => {
     try {
@@ -43,7 +48,13 @@ const Register = () => {
       if (response.success) {
         dispatch(loginSuccess(response))
         toast.success('Account created successfully!')
-        navigate('/dashboard')
+        
+        // Redirect based on role (though new users are always 'user')
+        if (response.user.role === 'admin') {
+          navigate('/admin')
+        } else {
+          navigate('/dashboard')
+        }
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed'

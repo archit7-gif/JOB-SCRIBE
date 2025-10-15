@@ -1,8 +1,8 @@
 
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { 
   IoArrowBack, 
@@ -33,13 +33,29 @@ const JobDetail = () => {
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState([])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm()
 
   useEffect(() => {
     fetchJobDetails()
     fetchJobNotes()
   }, [id])
+
+  useEffect(() => {
+    if (selectedJob && showEditModal) {
+      reset({
+        title: selectedJob.title,
+        company: selectedJob.company,
+        location: selectedJob.location || '',
+        description: selectedJob.description || '',
+        link: selectedJob.link || ''
+      })
+    }
+  }, [selectedJob, showEditModal, reset])
 
   const fetchJobDetails = async () => {
     try {
@@ -51,7 +67,6 @@ const JobDetail = () => {
     } catch (error) {
       toast.error('Failed to load job details')
       navigate('/jobs')
-      console.log(error)
     } finally {
       setLoading(false)
     }
@@ -65,7 +80,26 @@ const JobDetail = () => {
       }
     } catch (error) {
       console.error('Failed to load notes')
-      console.log(error)
+    }
+  }
+
+  const handleUpdateJob = async (data) => {
+    try {
+      setUpdating(true)
+      const response = await jobService.updateJob(id, {
+        ...data,
+        status: selectedJob.status
+      })
+      if (response.success) {
+        dispatch(updateJobAction(response.data))
+        dispatch(setSelectedJob(response.data))
+        toast.success('Job updated successfully')
+        setShowEditModal(false)
+      }
+    } catch (error) {
+      toast.error('Failed to update job')
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -80,7 +114,6 @@ const JobDetail = () => {
       }
     } catch (error) {
       toast.error('Failed to update status')
-      console.log(error)
     } finally {
       setUpdatingStatus(false)
     }
@@ -98,7 +131,6 @@ const JobDetail = () => {
     } catch (error) {
       toast.error('Failed to delete job')
       setDeleting(false)
-      console.log(error)
     }
   }
 
@@ -124,13 +156,22 @@ const JobDetail = () => {
         >
           Back to Jobs
         </Button>
-        <Button 
-          variant="danger" 
-          onClick={() => setShowDeleteModal(true)}
-          icon={<IoTrash />}
-        >
-          Delete
-        </Button>
+        <div className="header-actions">
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowEditModal(true)}
+            icon={<IoCreate />}
+          >
+            Edit
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={() => setShowDeleteModal(true)}
+            icon={<IoTrash />}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
 
       <Card className="job-detail-card">
@@ -214,6 +255,73 @@ const JobDetail = () => {
         )}
       </div>
 
+      {/* Edit Job Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Job"
+        size="medium"
+      >
+        <form onSubmit={handleSubmit(handleUpdateJob)} className="edit-job-form">
+          <div className="form-group">
+            <label className="form-label">Job Title *</label>
+            <input
+              type="text"
+              {...register('title', { required: 'Job title is required' })}
+              className={`form-input ${errors.title ? 'form-input-error' : ''}`}
+            />
+            {errors.title && <span className="form-error">{errors.title.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Company *</label>
+            <input
+              type="text"
+              {...register('company', { required: 'Company is required' })}
+              className={`form-input ${errors.company ? 'form-input-error' : ''}`}
+            />
+            {errors.company && <span className="form-error">{errors.company.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Location</label>
+            <input
+              type="text"
+              {...register('location')}
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Job Link</label>
+            <input
+              type="url"
+              {...register('link')}
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              {...register('description')}
+              className="form-input"
+              rows="6"
+            />
+          </div>
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={updating}>
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Modal */}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -237,3 +345,5 @@ const JobDetail = () => {
 }
 
 export default JobDetail
+
+

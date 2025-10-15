@@ -1,5 +1,3 @@
-
-
 import { IoSearch } from 'react-icons/io5'
 import UserCard from './UserCard'
 import LoadingSkeleton from '../common/LoadingSkeleton'
@@ -15,22 +13,9 @@ const UserTable = ({
   onDelete,
   loading = false 
 }) => {
-  if (loading) {
-    return <LoadingSkeleton type="list" count={5} />
-  }
-
-  if (!users || users.length === 0) {
-    return (
-      <EmptyState
-        icon="👥"
-        title={search ? "No users found" : "No users yet"}
-        message={search ? "Try adjusting your search" : "Users will appear here"}
-      />
-    )
-  }
-
   return (
     <div className="user-table">
+      {/* SEARCH BAR - ALWAYS VISIBLE */}
       <div className="user-table-header">
         <div className="search-input-wrapper">
           <IoSearch className="search-icon" />
@@ -44,19 +29,37 @@ const UserTable = ({
         </div>
       </div>
 
-      <div className="user-list">
-        {users.map((user) => (
-          <UserCard
-            key={user._id}
-            user={user}
-            currentUserId={currentUserId}
-            onToggleStatus={onToggleStatus}
-            onDelete={onDelete}
-          />
-        ))}
-      </div>
+      {/* LOADING STATE */}
+      {loading ? (
+        <LoadingSkeleton type="list" count={5} />
+      ) : (
+        <>
+          {/* NO RESULTS */}
+          {!users || users.length === 0 ? (
+            <EmptyState
+              icon="👥"
+              title={search ? "No users found" : "No users yet"}
+              message={search ? "Try adjusting your search" : "Users will appear here"}
+            />
+          ) : (
+            /* USER CARDS */
+            <div className="user-list">
+              {users.map((user) => (
+                <UserCard
+                  key={user._id}
+                  user={user}
+                  currentUserId={currentUserId}
+                  onToggleStatus={onToggleStatus}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
 
 export default UserTable
+

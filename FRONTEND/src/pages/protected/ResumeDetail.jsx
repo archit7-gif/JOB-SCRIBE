@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { IoArrowBack, IoTrash } from 'react-icons/io5'
+import { IoArrowBack, IoTrash, IoCreate } from 'react-icons/io5'
 import Button from '../../components/common/Button'
 import Card from '../../components/common/Card'
 import Modal from '../../components/common/Modal'
@@ -14,7 +15,8 @@ import OptimizedResumePreview from '../../components/resumes/OptimizedResumePrev
 import LoadingSkeleton from '../../components/common/LoadingSkeleton'
 import EmptyState from '../../components/common/EmptyState'
 import { 
-  setSelectedResume, 
+  setSelectedResume,
+  updateResume as updateResumeAction,
   deleteResume as deleteResumeAction,
   setAnalyzing,
   setOptimizing
@@ -30,14 +32,31 @@ const ResumeDetail = () => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('content')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [updating, setUpdating] = useState(false)
   const [currentOptimization, setCurrentOptimization] = useState(null)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
+  const { register, handleSubmit, formState: { errors }, reset } = useForm()
+
   useEffect(() => {
     fetchResumeDetails()
   }, [id])
+
+  useEffect(() => {
+    if (selectedResume && showEditModal && selectedResume.type === 'text') {
+      reset({
+        title: selectedResume.title,
+        content: selectedResume.content
+      })
+    } else if (selectedResume && showEditModal && selectedResume.type === 'file') {
+      reset({
+        title: selectedResume.title
+      })
+    }
+  }, [selectedResume, showEditModal, reset])
 
   const fetchResumeDetails = async () => {
     try {
@@ -49,9 +68,25 @@ const ResumeDetail = () => {
     } catch (error) {
       toast.error('Failed to load resume')
       navigate('/resumes')
-      console.log(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUpdateResume = async (data) => {
+    try {
+      setUpdating(true)
+      const response = await resumeService.updateResume(id, data)
+      if (response.success) {
+        dispatch(updateResumeAction(response.data))
+        dispatch(setSelectedResume(response.data))
+        toast.success('Resume updated successfully')
+        setShowEditModal(false)
+      }
+    } catch (error) {
+      toast.error('Failed to update resume')
+    } finally {
+      setUpdating(false)
     }
   }
 
@@ -107,7 +142,6 @@ const ResumeDetail = () => {
       toast.success('Resume downloaded successfully')
     } catch (error) {
       toast.error('Failed to download resume')
-      console.log(error)
     } finally {
       setDownloading(false)
     }
@@ -124,7 +158,6 @@ const ResumeDetail = () => {
       }
     } catch (error) {
       toast.error('Failed to delete resume')
-      console.log(error)
       setDeleting(false)
     }
   }
@@ -151,13 +184,22 @@ const ResumeDetail = () => {
         >
           Back to Resumes
         </Button>
-        <Button 
-          variant="danger" 
-          onClick={() => setShowDeleteModal(true)}
-          icon={<IoTrash />}
-        >
-          Delete
-        </Button>
+        <div className="header-actions">
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowEditModal(true)}
+            icon={<IoCreate />}
+          >
+            Edit
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={() => setShowDeleteModal(true)}
+            icon={<IoTrash />}
+          >
+            Delete
+          </Button>
+        </div>
       </div>
 
       <Card className="resume-detail-card">
@@ -236,6 +278,54 @@ const ResumeDetail = () => {
         </div>
       )}
 
+      {/* Edit Resume Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Resume"
+        size="medium"
+      >
+        <form onSubmit={handleSubmit(handleUpdateResume)} className="edit-resume-form">
+          <div className="form-group">
+            <label className="form-label">Title *</label>
+            <input
+              type="text"
+              {...register('title', { required: 'Title is required' })}
+              className={`form-input ${errors.title ? 'form-input-error' : ''}`}
+            />
+            {errors.title && <span className="form-error">{errors.title.message}</span>}
+          </div>
+
+          {selectedResume.type === 'text' && (
+            <div className="form-group">
+              <label className="form-label">Content *</label>
+              <textarea
+                {...register('content', { required: 'Content is required' })}
+                className={`form-input ${errors.content ? 'form-input-error' : ''}`}
+                rows="12"
+              />
+              {errors.content && <span className="form-error">{errors.content.message}</span>}
+            </div>
+          )}
+
+          {selectedResume.type === 'file' && (
+            <p className="field-note">
+              Note: File content cannot be edited. Only the title can be changed.
+            </p>
+          )}
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={updating}>
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Modal */}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -267,3 +357,4 @@ const ResumeDetail = () => {
 }
 
 export default ResumeDetail
+

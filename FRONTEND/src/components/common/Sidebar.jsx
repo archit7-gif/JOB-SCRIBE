@@ -1,3 +1,5 @@
+
+
 import { NavLink } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { 
@@ -14,7 +16,14 @@ import './Sidebar.css'
 const Sidebar = ({ isOpen, onClose, onLogout }) => {
   const { user } = useSelector((state) => state.auth)
 
-  const menuItems = [
+  // Admin only sees Dashboard and Profile
+  const adminMenuItems = [
+    { path: '/admin', icon: <IoShield />, label: 'Admin Dashboard' },
+    { path: '/profile', icon: <IoPerson />, label: 'Profile' }
+  ]
+
+  // Regular users see all menu items
+  const userMenuItems = [
     { path: '/dashboard', icon: <IoGrid />, label: 'Dashboard' },
     { path: '/jobs', icon: <IoBriefcase />, label: 'Jobs' },
     { path: '/resumes', icon: <IoDocument />, label: 'Resumes' },
@@ -22,9 +31,8 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
     { path: '/profile', icon: <IoPerson />, label: 'Profile' }
   ]
 
-  if (user?.role === 'admin') {
-    menuItems.push({ path: '/admin', icon: <IoShield />, label: 'Admin' })
-  }
+  // Choose menu items based on role
+  const menuItems = user?.role === 'admin' ? adminMenuItems : userMenuItems
 
   return (
     <>
@@ -51,12 +59,12 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
         </nav>
       </aside>
       
-      {/* Overlay renders AFTER sidebar for correct z-index stacking */}
       {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
     </>
   )
 }
 
 export default Sidebar
+
 
 

@@ -16,13 +16,18 @@ const Login = () => {
   const { register, handleSubmit, formState: { errors } } = useForm()
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { loading, isAuthenticated } = useSelector((state) => state.auth)
+  const { loading, isAuthenticated, user } = useSelector((state) => state.auth) // Added user
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard')
+    if (isAuthenticated && user) {
+      // Redirect based on role
+      if (user.role === 'admin') {
+        navigate('/admin')
+      } else {
+        navigate('/dashboard')
+      }
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, user, navigate]) // Added user to dependencies
 
   const onSubmit = async (data) => {
     try {
@@ -31,8 +36,15 @@ const Login = () => {
       
       if (response.success) {
         dispatch(loginSuccess(response))
-        toast.success('Login successful!')
-        navigate('/dashboard')
+        
+        // Redirect based on role
+        if (response.user.role === 'admin') {
+          toast.success(`Welcome, Admin ${response.user.fullname.firstname}!`)
+          navigate('/admin')
+        } else {
+          toast.success(`Welcome back, ${response.user.fullname.firstname}!`)
+          navigate('/dashboard')
+        }
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed'

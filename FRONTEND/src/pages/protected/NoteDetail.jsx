@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { IoArrowBack, IoTrash, IoCreate } from 'react-icons/io5'
 import Button from '../../components/common/Button'
@@ -10,6 +10,7 @@ import Modal from '../../components/common/Modal'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton'
 import { 
   setSelectedNote, 
+  updateNote as updateNoteAction,
   deleteNote as deleteNoteAction 
 } from '../../redux/slices/notesSlice'
 import noteService from '../../services/noteService'
@@ -23,11 +24,24 @@ const NoteDetail = () => {
   const { selectedNote } = useSelector((state) => state.notes)
   const [loading, setLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [updating, setUpdating] = useState(false)
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm()
 
   useEffect(() => {
     fetchNoteDetails()
   }, [id])
+
+  useEffect(() => {
+    if (selectedNote && showEditModal) {
+      reset({
+        title: selectedNote.title,
+        content: selectedNote.content
+      })
+    }
+  }, [selectedNote, showEditModal, reset])
 
   const fetchNoteDetails = async () => {
     try {
@@ -44,6 +58,23 @@ const NoteDetail = () => {
     }
   }
 
+  const handleUpdateNote = async (data) => {
+    try {
+      setUpdating(true)
+      const response = await noteService.updateNote(id, data)
+      if (response.success) {
+        dispatch(updateNoteAction(response.data))
+        dispatch(setSelectedNote(response.data))
+        toast.success('Note updated successfully')
+        setShowEditModal(false)
+      }
+    } catch (error) {
+      toast.error('Failed to update note')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   const handleDelete = async () => {
     try {
       setDeleting(true)
@@ -57,11 +88,6 @@ const NoteDetail = () => {
       toast.error('Failed to delete note')
       setDeleting(false)
     }
-  }
-
-  const handleEdit = () => {
-    // Navigate to edit mode or open edit modal
-    toast.info('Edit functionality coming soon!')
   }
 
   if (loading) {
@@ -89,7 +115,7 @@ const NoteDetail = () => {
         <div className="header-actions">
           <Button 
             variant="secondary" 
-            onClick={handleEdit}
+            onClick={() => setShowEditModal(true)}
             icon={<IoCreate />}
           >
             Edit
@@ -122,6 +148,46 @@ const NoteDetail = () => {
         </div>
       </Card>
 
+      {/* Edit Note Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Edit Note"
+        size="medium"
+      >
+        <form onSubmit={handleSubmit(handleUpdateNote)} className="edit-note-form">
+          <div className="form-group">
+            <label className="form-label">Title *</label>
+            <input
+              type="text"
+              {...register('title', { required: 'Title is required' })}
+              className={`form-input ${errors.title ? 'form-input-error' : ''}`}
+            />
+            {errors.title && <span className="form-error">{errors.title.message}</span>}
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Content *</label>
+            <textarea
+              {...register('content', { required: 'Content is required' })}
+              className={`form-input ${errors.content ? 'form-input-error' : ''}`}
+              rows="12"
+            />
+            {errors.content && <span className="form-error">{errors.content.message}</span>}
+          </div>
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" type="submit" loading={updating}>
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Modal */}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
@@ -145,3 +211,4 @@ const NoteDetail = () => {
 }
 
 export default NoteDetail
+

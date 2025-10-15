@@ -24,15 +24,16 @@ import './AdminDashboard.css'
 const AdminDashboard = () => {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
-  const { stats, users, search, loading } = useSelector((state) => state.admin)
+  const { stats, filteredUsers, search, loading } = useSelector((state) => state.admin) // CHANGED: users to filteredUsers
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
+  // FIXED: Removed search from dependency - fetch only once
   useEffect(() => {
     fetchStats()
     fetchUsers()
-  }, [search])
+  }, []) // Empty array - fetch only on mount
 
   const fetchStats = async () => {
     try {
@@ -46,10 +47,11 @@ const AdminDashboard = () => {
     }
   }
 
+  // FIXED: Removed search parameter - always fetch all users
   const fetchUsers = async () => {
     try {
       dispatch(setLoading(true))
-      const response = await adminService.getUsers({ search })
+      const response = await adminService.getUsers() // No search param
       if (response.success) {
         dispatch(setUsers(response))
       }
@@ -130,7 +132,7 @@ const AdminDashboard = () => {
       <Card className="users-card">
         <h2 className="users-title">User Management</h2>
         <UserTable
-          users={users}
+          users={filteredUsers} // CHANGED: now using filteredUsers
           currentUserId={user?._id}
           search={search}
           onSearchChange={(value) => dispatch(setSearch(value))}
@@ -163,3 +165,4 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+
