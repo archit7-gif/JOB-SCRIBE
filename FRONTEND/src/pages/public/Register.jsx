@@ -1,11 +1,11 @@
 
 
-import { useEffect } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { IoPersonAdd } from 'react-icons/io5'
+import { IoPersonAdd, IoEye, IoEyeOff } from 'react-icons/io5'
 import Button from '../../components/common/Button'
 import { loginStart, loginSuccess, loginFailure } from '../../redux/slices/authSlice'
 import { validationRules } from '../../utils/validators'
@@ -16,19 +16,10 @@ const Register = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const { loading, isAuthenticated, user } = useSelector((state) => state.auth)  // ADD user
+  const { loading } = useSelector((state) => state.auth)
   const password = watch('password')
-
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // Redirect based on role
-      if (user.role === 'admin') {
-        navigate('/admin')
-      } else {
-        navigate('/dashboard')
-      }
-    }
-  }, [isAuthenticated, user, navigate])  // ADD user to dependencies
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const onSubmit = async (data) => {
     try {
@@ -49,7 +40,6 @@ const Register = () => {
         dispatch(loginSuccess(response))
         toast.success('Account created successfully!')
         
-        // Redirect based on role (though new users are always 'user')
         if (response.user.role === 'admin') {
           navigate('/admin')
         } else {
@@ -69,11 +59,11 @@ const Register = () => {
         <div className="auth-card">
           <div className="auth-header">
             <h1 className="auth-title">Create Account</h1>
-            <p className="auth-subtitle">Start optimizing your job search today</p>
+            <p className="auth-subtitle">Start your job search journey</p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="auth-form">
-            <div className="form-grid">
+          <form onSubmit={handleSubmit(onSubmit)} className="auth-form" noValidate>
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">First Name</label>
                 <input
@@ -98,35 +88,58 @@ const Register = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Email Address</label>
+              <label className="form-label">Email</label>
               <input
                 type="email"
                 {...register('email', validationRules.email)}
                 className={`form-input ${errors.email ? 'form-input-error' : ''}`}
                 placeholder="you@example.com"
+                autoComplete="email"
               />
               {errors.email && <span className="form-error">{errors.email.message}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                {...register('password', validationRules.password)}
-                className={`form-input ${errors.password ? 'form-input-error' : ''}`}
-                placeholder="At least 8 characters"
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password', validationRules.password)}
+                  className={`form-input ${errors.password ? 'form-input-error' : ''}`}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex="-1"
+                >
+                  {showPassword ? <IoEyeOff /> : <IoEye />}
+                </button>
+              </div>
               {errors.password && <span className="form-error">{errors.password.message}</span>}
             </div>
 
             <div className="form-group">
               <label className="form-label">Confirm Password</label>
-              <input
-                type="password"
-                {...register('confirmPassword', validationRules.confirmPassword(password))}
-                className={`form-input ${errors.confirmPassword ? 'form-input-error' : ''}`}
-                placeholder="Re-enter password"
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  {...register('confirmPassword', validationRules.confirmPassword(password))}
+                  className={`form-input ${errors.confirmPassword ? 'form-input-error' : ''}`}
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  tabIndex="-1"
+                >
+                  {showConfirmPassword ? <IoEyeOff /> : <IoEye />}
+                </button>
+              </div>
               {errors.confirmPassword && <span className="form-error">{errors.confirmPassword.message}</span>}
             </div>
 

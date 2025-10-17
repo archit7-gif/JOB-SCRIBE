@@ -1,5 +1,4 @@
 
-
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
@@ -28,11 +27,9 @@ const authSlice = createSlice({
     },
     loginFailure: (state, action) => {
       state.loading = false
-      state.isAuthenticated = false
-      state.user = null
-      state.token = null
       state.error = action.payload
-      localStorage.removeItem('token')
+      // DON'T change isAuthenticated or remove token on login failure
+      // Only clear error state
     },
     logout: (state) => {
       state.user = null

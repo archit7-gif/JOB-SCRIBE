@@ -1,4 +1,3 @@
-
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
@@ -32,25 +31,40 @@ api.interceptors.response.use(
   (error) => {
     const status = error.response?.status
     const message = error.response?.data?.message || 'Something went wrong'
+    const url = error.config?.url || ''
+
+    // Check if this is a login or register request
+    const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/register')
 
     if (status === 401) {
-      // Unauthorized - clear auth and redirect
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-      toast.error('Session expired. Please login again.')
+      // Only logout and redirect if it's NOT a login/register request
+      if (!isAuthRequest) {
+        localStorage.removeItem('token')
+        window.location.href = '/login'
+        toast.error('Session expired. Please login again.')
+      }
+      // For login failures, let the component handle the error
     } else if (status === 403) {
-      toast.error('You do not have permission to perform this action')
+      if (!isAuthRequest) {
+        toast.error('You do not have permission to perform this action')
+      }
     } else if (status === 404) {
-      toast.error('Resource not found')
+      // Only show for non-specific resource requests
+      if (!url.includes('/jobs/') && !url.includes('/resumes/') && !url.includes('/notes/')) {
+        toast.error('Resource not found')
+      }
     } else if (status === 409) {
-      toast.error(message)
+      // Let component handle duplicate errors (e.g., email already exists)
+      // Don't show toast here
     } else if (status >= 500) {
       toast.error('Server error. Please try again later.')
     } else if (status === 400) {
-      // Validation errors - don't show generic toast here
-      // Individual forms will handle validation errors
+      // Validation errors - let component handle
     } else {
-      toast.error(message)
+      // Only show toast for non-auth requests
+      if (!isAuthRequest) {
+        toast.error(message)
+      }
     }
 
     return Promise.reject(error)

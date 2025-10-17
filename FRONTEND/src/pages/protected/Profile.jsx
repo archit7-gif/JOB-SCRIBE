@@ -1,16 +1,15 @@
 
-
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { IoPerson, IoCamera, IoTrash, IoLogOut } from 'react-icons/io5'
+import { IoCamera, IoTrash, IoLogOut } from 'react-icons/io5'
 import Button from '../../components/common/Button'
 import Card from '../../components/common/Card'
 import Modal from '../../components/common/Modal'
 import ThemeToggle from '../../components/common/ThemeToggle'
-import { logout, setUser } from '../../redux/slices/authSlice'
+import { logout } from '../../redux/slices/authSlice'
 import { validationRules } from '../../utils/validators'
 import { getInitials } from '../../utils/formatters'
 import authService from '../../services/authService'
@@ -46,7 +45,6 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Failed to load profile picture')
-      console.log(error)
     }
   }
 
@@ -54,13 +52,11 @@ const Profile = () => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
       toast.error('Only JPG and PNG files are allowed')
       return
     }
 
-    // Validate file size (2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error('File size must be less than 2MB')
       return
@@ -89,17 +85,14 @@ const Profile = () => {
       }
     } catch (error) {
       toast.error('Failed to delete profile picture')
-      console.log(error)
     }
   }
 
   const handleUpdateProfile = async (data) => {
     try {
-      // This would require a backend endpoint for updating profile
       toast.info('Profile update feature coming soon')
     } catch (error) {
       toast.error('Failed to update profile')
-      console.log(error)
     }
   }
 
@@ -111,7 +104,6 @@ const Profile = () => {
       navigate('/login')
     } catch (error) {
       toast.error('Logout failed')
-      console.log(error)
     }
   }
 
@@ -123,30 +115,27 @@ const Profile = () => {
 
     try {
       setDeleting(true)
-      // This would require a backend endpoint for account deletion
       toast.info('Account deletion feature coming soon')
       setShowDeleteModal(false)
     } catch (error) {
       toast.error('Failed to delete account')
-      console.log(error)
     } finally {
       setDeleting(false)
     }
   }
 
+  const isAdmin = user?.role === 'admin'
+
   return (
     <div className="profile-page">
       <div className="page-header">
-        <div>
-          <h1 className="page-title">Profile & Settings</h1>
-          <p className="page-subtitle">Manage your account and preferences</p>
-        </div>
+        <h1 className="page-title">Your Profile</h1>
+
       </div>
 
       <div className="profile-grid">
-        {/* Profile Picture Card */}
+        {/* Profile Header Card */}
         <Card className="profile-picture-card">
-          <h3 className="card-title">Profile Picture</h3>
           <div className="profile-picture-container">
             {profilePicture ? (
               <img src={profilePicture} alt="Profile" className="profile-picture" />
@@ -164,30 +153,39 @@ const Profile = () => {
                 disabled={uploading}
               />
               <div className="upload-overlay">
-                <IoCamera size={24} />
-                <span>{uploading ? 'Uploading...' : 'Change Photo'}</span>
+                <IoCamera />
+                <span>{uploading ? 'Uploading...' : 'Change'}</span>
               </div>
             </label>
           </div>
-          {profilePicture && (
-            <Button
-              variant="danger"
-              size="small"
-              onClick={handleDeleteProfilePicture}
-              icon={<IoTrash />}
-              fullWidth
-            >
-              Remove Photo
-            </Button>
-          )}
-          <p className="profile-picture-note">JPG or PNG • Max 2MB</p>
+
+          <div className="profile-info-section">
+            <h2 className="profile-name">
+              {user?.fullname?.firstname} {user?.fullname?.lastname}
+            </h2>
+            <p className="profile-email">{user?.email}</p>
+            <span className="profile-role-badge">
+              {isAdmin ? 'Administrator' : 'User'}
+            </span>
+            {profilePicture && (
+              <Button
+                variant="danger"
+                size="small"
+                onClick={handleDeleteProfilePicture}
+                icon={<IoTrash />}
+              >
+                Remove Photo
+              </Button>
+            )}
+            <p className="profile-picture-note">JPG or PNG • Max 2MB</p>
+          </div>
         </Card>
 
         {/* Account Information Card */}
         <Card className="profile-info-card">
           <h3 className="card-title">Account Information</h3>
           <form onSubmit={handleSubmit(handleUpdateProfile)} className="profile-form">
-            <div className="form-grid">
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">First Name</label>
                 <input
@@ -210,7 +208,7 @@ const Profile = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Email</label>
+              <label className="form-label">Email Address</label>
               <input
                 type="email"
                 value={user?.email || ''}
@@ -226,92 +224,89 @@ const Profile = () => {
           </form>
         </Card>
 
-        {/* Preferences Card */}
-        <Card className="preferences-card">
-          <h3 className="card-title">Preferences</h3>
-          <div className="preference-item">
-            <div>
-              <p className="preference-label">Theme</p>
-              <p className="preference-description">
-                Current: {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </p>
+        {/* Preferences Card - Only for Regular Users */}
+        {!isAdmin && (
+          <Card className="preferences-card">
+            <h3 className="card-title">Preferences</h3>
+            <div className="preference-item">
+              <div className="preference-info">
+                <p className="preference-label">Appearance</p>
+                <p className="preference-description">
+                  {mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                </p>
+              </div>
+              <ThemeToggle />
             </div>
-            <ThemeToggle />
-          </div>
+          </Card>
+        )}
 
-          <div className="preference-item">
-            <div>
-              <p className="preference-label">Account Role</p>
-              <p className="preference-description">
-                {user?.role === 'admin' ? 'Administrator' : 'User'}
-              </p>
+        {/* Danger Zone - Only for Regular Users */}
+        {!isAdmin && (
+          <Card className="danger-zone-card">
+            <h3 className="danger-title">Danger Zone</h3>
+            <div className="danger-actions">
+              <Button
+                variant="secondary"
+                onClick={handleLogout}
+                icon={<IoLogOut />}
+              >
+                Logout
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => setShowDeleteModal(true)}
+                icon={<IoTrash />}
+              >
+                Delete Account
+              </Button>
             </div>
-          </div>
-        </Card>
-
-        {/* Danger Zone Card */}
-        <Card className="danger-zone-card">
-          <h3 className="card-title danger-title">Danger Zone</h3>
-          
-          <div className="danger-actions">
-            <Button
-              variant="secondary"
-              onClick={handleLogout}
-              icon={<IoLogOut />}
-              fullWidth
-            >
-              Logout
-            </Button>
-
-            <Button
-              variant="danger"
-              onClick={() => setShowDeleteModal(true)}
-              icon={<IoTrash />}
-              fullWidth
-            >
-              Delete Account
-            </Button>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
 
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Delete Account"
-        size="small"
-      >
-        <div className="delete-account-modal">
-          <p className="delete-warning">
-            ⚠️ This action is permanent and cannot be undone. All your jobs, resumes, and notes will be deleted.
-          </p>
-          <div className="form-group">
-            <label className="form-label">Type <strong>DELETE</strong> to confirm</label>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              className="form-input"
-              placeholder="DELETE"
-            />
+      {/* Delete Modal */}
+      {!isAdmin && (
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          title="Delete Account"
+          size="small"
+        >
+          <div className="delete-account-modal">
+            <p className="delete-warning">
+              ⚠️ This action is permanent and cannot be undone. All your jobs, resumes, and notes will be deleted.
+            </p>
+            <div className="form-group">
+              <label className="form-label">Type <strong>DELETE</strong> to confirm</label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="form-input"
+                placeholder="DELETE"
+              />
+            </div>
+            <div className="modal-actions">
+              <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="danger" 
+                onClick={handleDeleteAccount}
+                loading={deleting}
+                disabled={deleteConfirmText !== 'DELETE'}
+              >
+                Delete My Account
+              </Button>
+            </div>
           </div>
-          <div className="modal-actions">
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-              Cancel
-            </Button>
-            <Button 
-              variant="danger" 
-              onClick={handleDeleteAccount}
-              loading={deleting}
-              disabled={deleteConfirmText !== 'DELETE'}
-            >
-              Delete My Account
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </div>
   )
 }
 
 export default Profile
+
+
+

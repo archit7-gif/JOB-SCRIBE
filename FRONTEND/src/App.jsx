@@ -40,7 +40,7 @@ import authService from './services/authService'
 
 function App() {
   const dispatch = useDispatch()
-  const { isAuthenticated, loading: authLoading } = useSelector((state) => state.auth)
+  const { isAuthenticated, user, loading: authLoading } = useSelector((state) => state.auth)
   const { mode } = useSelector((state) => state.theme)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [initializing, setInitializing] = useState(true)
@@ -105,6 +105,12 @@ function App() {
     )
   }
 
+  // Helper function to determine redirect path
+  const getRedirectPath = () => {
+    if (!isAuthenticated) return null
+    return user?.role === 'admin' ? '/admin' : '/dashboard'
+  }
+
   return (
     <Router>
       <div className="app-layout">
@@ -119,29 +125,40 @@ function App() {
         )}
 
         <main className="app-main">
-          {/* Add conditional class based on authentication */}
           <div className={`app-content ${isAuthenticated ? 'app-content-with-sidebar' : ''}`}>
             <Routes>
               {/* Public Routes */}
               <Route 
                 path="/" 
-                element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Welcome />} 
+                element={
+                  isAuthenticated 
+                    ? <Navigate to={getRedirectPath()} replace /> 
+                    : <Welcome />
+                } 
               />
               <Route 
                 path="/login" 
-                element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
+                element={
+                  isAuthenticated 
+                    ? <Navigate to={getRedirectPath()} replace /> 
+                    : <Login />
+                } 
               />
               <Route 
                 path="/register" 
-                element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />} 
+                element={
+                  isAuthenticated 
+                    ? <Navigate to={getRedirectPath()} replace /> 
+                    : <Register />
+                } 
               />
 
-              {/* Protected Routes */}
+              {/* Protected Routes - Regular Users Only */}
               <Route 
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Dashboard />}
                   </ProtectedRoute>
                 } 
               />
@@ -151,7 +168,7 @@ function App() {
                 path="/jobs" 
                 element={
                   <ProtectedRoute>
-                    <JobsList />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <JobsList />}
                   </ProtectedRoute>
                 } 
               />
@@ -159,7 +176,7 @@ function App() {
                 path="/jobs/add" 
                 element={
                   <ProtectedRoute>
-                    <AddJob />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <AddJob />}
                   </ProtectedRoute>
                 } 
               />
@@ -167,7 +184,7 @@ function App() {
                 path="/jobs/:id" 
                 element={
                   <ProtectedRoute>
-                    <JobDetail />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <JobDetail />}
                   </ProtectedRoute>
                 } 
               />
@@ -177,7 +194,7 @@ function App() {
                 path="/resumes" 
                 element={
                   <ProtectedRoute>
-                    <ResumesList />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <ResumesList />}
                   </ProtectedRoute>
                 } 
               />
@@ -185,31 +202,30 @@ function App() {
                 path="/resumes/:id" 
                 element={
                   <ProtectedRoute>
-                    <ResumeDetail />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <ResumeDetail />}
                   </ProtectedRoute>
                 } 
               />
 
-              {/* Notes Route */}
+              {/* Notes Routes */}
               <Route 
                 path="/notes" 
                 element={
                   <ProtectedRoute>
-                    <NotesList />
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <NotesList />}
                   </ProtectedRoute>
                 } 
               />
-              {/* ADD THIS - Note Detail Route */}
-<Route 
-  path="/notes/:id" 
-  element={
-    <ProtectedRoute>
-      <NoteDetail />
-    </ProtectedRoute>
-  } 
-/>
+              <Route 
+                path="/notes/:id" 
+                element={
+                  <ProtectedRoute>
+                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <NoteDetail />}
+                  </ProtectedRoute>
+                } 
+              />
 
-              {/* Profile Route */}
+              {/* Profile Route - Available to All */}
               <Route 
                 path="/profile" 
                 element={
@@ -255,5 +271,6 @@ function App() {
 }
 
 export default App
+
 
 

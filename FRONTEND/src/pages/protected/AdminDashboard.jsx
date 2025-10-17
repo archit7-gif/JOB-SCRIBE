@@ -1,6 +1,4 @@
-
-
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
 import { IoPeople, IoCheckmarkCircle, IoCloseCircle } from 'react-icons/io5'
@@ -24,16 +22,20 @@ import './AdminDashboard.css'
 const AdminDashboard = () => {
   const dispatch = useDispatch()
   const { user } = useSelector((state) => state.auth)
-  const { stats, filteredUsers, search, loading } = useSelector((state) => state.admin) // CHANGED: users to filteredUsers
+  const { stats, filteredUsers, search, loading } = useSelector((state) => state.admin)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
-  // FIXED: Removed search from dependency - fetch only once
+  // Filter out admin users from the list
+  const nonAdminUsers = useMemo(() => {
+    return filteredUsers.filter(u => u.role !== 'admin')
+  }, [filteredUsers])
+
   useEffect(() => {
     fetchStats()
     fetchUsers()
-  }, []) // Empty array - fetch only on mount
+  }, [])
 
   const fetchStats = async () => {
     try {
@@ -43,21 +45,18 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       toast.error('Failed to load statistics')
-      console.log(error)
     }
   }
 
-  // FIXED: Removed search parameter - always fetch all users
   const fetchUsers = async () => {
     try {
       dispatch(setLoading(true))
-      const response = await adminService.getUsers() // No search param
+      const response = await adminService.getUsers()
       if (response.success) {
         dispatch(setUsers(response))
       }
     } catch (error) {
       toast.error('Failed to load users')
-      console.log(error)
     } finally {
       dispatch(setLoading(false))
     }
@@ -106,7 +105,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="admin-stats-grid">
         <StatsCard
           icon={<IoPeople />}
@@ -128,11 +126,10 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* Users Management */}
       <Card className="users-card">
         <h2 className="users-title">User Management</h2>
         <UserTable
-          users={filteredUsers} // CHANGED: now using filteredUsers
+          users={nonAdminUsers}
           currentUserId={user?._id}
           search={search}
           onSearchChange={(value) => dispatch(setSearch(value))}
@@ -165,4 +162,7 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
+
+
+
 

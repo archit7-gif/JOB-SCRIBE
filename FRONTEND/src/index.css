@@ -36,7 +36,7 @@ body {
   line-height: 1.5;
   color: var(--color-text);
   background: var(--color-bg);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #root {
@@ -126,6 +126,35 @@ body {
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
+
+
+
+/* ============================================
+   SMOOTH THEME TRANSITION
+   ============================================ */
+
+/* Smooth transition for all elements */
+*,
+*::before,
+*::after {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              fill 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Exclude animations and transforms from theme transition */
+* {
+  transition-property: background-color, border-color, color, fill, box-shadow;
+}
+
+/* Special handling for images - smooth opacity change */
+img {
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+
 
 /* ============================================
    TYPOGRAPHY
@@ -767,7 +796,13 @@ a:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  
+  /* Disable theme transition for reduced motion */
+  body {
+    transition: none !important;
+  }
 }
+
 
 /* ============================================
    DARK MODE IMAGES
