@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { ToastContainer } from 'react-toastify'
+import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
 // Layout Components
@@ -38,8 +39,9 @@ import { setUser, logout } from './redux/slices/authSlice'
 import { setTheme } from './redux/slices/themeSlice'
 import authService from './services/authService'
 
-function App() {
+function AppContent() {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { isAuthenticated, user, loading: authLoading } = useSelector((state) => state.auth)
   const { mode } = useSelector((state) => state.theme)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -89,10 +91,18 @@ function App() {
   const handleLogout = async () => {
     try {
       await authService.logout()
-      dispatch(logout())
       setSidebarOpen(false)
+      
+      // Clear auth state first
+      dispatch(logout())
+      
+      // Then show toast and navigate
+      toast.success('Logged out successfully')
+      navigate('/login')
+      
     } catch (error) {
       console.error('Logout failed:', error)
+      toast.error('Logout failed')
     }
   }
 
@@ -112,160 +122,166 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="app-layout">
-        <Navbar onMenuClick={handleMenuClick} />
-        
-        {isAuthenticated && (
-          <Sidebar 
-            isOpen={sidebarOpen} 
-            onClose={handleSidebarClose}
-            onLogout={handleLogout}
-          />
-        )}
-
-        <main className="app-main">
-          <div className={`app-content ${isAuthenticated ? 'app-content-with-sidebar' : ''}`}>
-            <Routes>
-              {/* Public Routes */}
-              <Route 
-                path="/" 
-                element={
-                  isAuthenticated 
-                    ? <Navigate to={getRedirectPath()} replace /> 
-                    : <Welcome />
-                } 
-              />
-              <Route 
-                path="/login" 
-                element={
-                  isAuthenticated 
-                    ? <Navigate to={getRedirectPath()} replace /> 
-                    : <Login />
-                } 
-              />
-              <Route 
-                path="/register" 
-                element={
-                  isAuthenticated 
-                    ? <Navigate to={getRedirectPath()} replace /> 
-                    : <Register />
-                } 
-              />
-
-              {/* Protected Routes - Regular Users Only */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Dashboard />}
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Jobs Routes */}
-              <Route 
-                path="/jobs" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <JobsList />}
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/jobs/add" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <AddJob />}
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/jobs/:id" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <JobDetail />}
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Resumes Routes */}
-              <Route 
-                path="/resumes" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <ResumesList />}
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/resumes/:id" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <ResumeDetail />}
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Notes Routes */}
-              <Route 
-                path="/notes" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <NotesList />}
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/notes/:id" 
-                element={
-                  <ProtectedRoute>
-                    {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <NoteDetail />}
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Profile Route - Available to All */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                } 
-              />
-
-              {/* Admin Route */}
-              <Route 
-                path="/admin" 
-                element={
-                  <AdminRoute>
-                    <AdminDashboard />
-                  </AdminRoute>
-                } 
-              />
-
-              {/* Error Routes */}
-              <Route path="/500" element={<ServerError />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
-        </main>
-
-        {/* Toast Notifications */}
-        <ToastContainer
-          position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme={mode === 'dark' ? 'dark' : 'light'}
+    <div className="app-layout">
+      <Navbar onMenuClick={handleMenuClick} />
+      
+      {isAuthenticated && (
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={handleSidebarClose}
+          onLogout={handleLogout}
         />
-      </div>
+      )}
+
+      <main className="app-main">
+        <div className={`app-content ${isAuthenticated ? 'app-content-with-sidebar' : ''}`}>
+          <Routes>
+            {/* Public Routes */}
+            <Route 
+              path="/" 
+              element={
+                isAuthenticated 
+                  ? <Navigate to={getRedirectPath()} replace /> 
+                  : <Welcome />
+              } 
+            />
+            <Route 
+              path="/login" 
+              element={
+                isAuthenticated 
+                  ? <Navigate to={getRedirectPath()} replace /> 
+                  : <Login />
+              } 
+            />
+            <Route 
+              path="/register" 
+              element={
+                isAuthenticated 
+                  ? <Navigate to={getRedirectPath()} replace /> 
+                  : <Register />
+              } 
+            />
+
+            {/* Protected Routes - Regular Users Only */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Dashboard />}
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Jobs Routes */}
+            <Route 
+              path="/jobs" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <JobsList />}
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/jobs/add" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <AddJob />}
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/jobs/:id" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <JobDetail />}
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Resumes Routes */}
+            <Route 
+              path="/resumes" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <ResumesList />}
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resumes/:id" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <ResumeDetail />}
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Notes Routes */}
+            <Route 
+              path="/notes" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <NotesList />}
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/notes/:id" 
+              element={
+                <ProtectedRoute>
+                  {user?.role === 'admin' ? <Navigate to="/admin" replace /> : <NoteDetail />}
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Profile Route - Available to All */}
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Admin Route */}
+            <Route 
+              path="/admin" 
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } 
+            />
+
+            {/* Error Routes */}
+            <Route path="/500" element={<ServerError />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+      </main>
+
+      {/* Toast Notifications */}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={mode === 'dark' ? 'dark' : 'light'}
+      />
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   )
 }

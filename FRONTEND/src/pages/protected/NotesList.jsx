@@ -96,7 +96,7 @@ const NotesList = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Notes</h1>
-          <p className="page-subtitle">Organize interview notes and follow-ups</p>
+          
         </div>
         <Button 
           variant="primary" 

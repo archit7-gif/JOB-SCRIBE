@@ -44,7 +44,6 @@ const ResumesList = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Resumes</h1>
-          <p className="page-subtitle">Manage and optimize your resumes with AI</p>
         </div>
         <Button 
           variant="primary" 

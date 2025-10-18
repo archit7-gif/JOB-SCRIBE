@@ -51,7 +51,7 @@ const JobsList = () => {
       <div className="page-header">
         <div>
           <h1 className="page-title">Jobs</h1>
-          <p className="page-subtitle">Track and manage your job applications</p>
+        
         </div>
         <Button 
           variant="primary" 

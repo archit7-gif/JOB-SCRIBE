@@ -10,7 +10,7 @@ const Welcome = () => {
         <div className="hero-content">
           <div className="hero-badge">
             <IoSparkles size={16} />
-            <span>AI-Powered Job Search</span>
+            <span>AI-Powered Job Hunt</span>
           </div>
           <h1 className="hero-title">
             Land Your Dream Job with <span className="highlight">Smart Resume Optimization</span>
@@ -85,7 +85,7 @@ const Welcome = () => {
             </div>
             <div className="feature-item">
               <IoCheckmarkCircle />
-              <span>Interview Notes</span>
+              <span>Notes Management</span>
             </div>
             <div className="feature-item">
               <IoCheckmarkCircle />
