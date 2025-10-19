@@ -1,147 +1,386 @@
 
-
 const PDFDocument = require('pdfkit')
 const fs = require('fs')
 
+
 class PDFGeneratorService {
-    
-    // Generate PDF buffer for download
-    generateResumePDFBuffer(content) {
-        return new Promise((resolve, reject) => {
-            try {
-                const doc = new PDFDocument({
-                    size: 'A4',
-                    margins: { top: 50, bottom: 50, left: 50, right: 50 }
-                })
+    
+    // Generate PDF buffer for download
+    generateResumePDFBuffer(content, resumeTitle) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({
+                    size: 'A4',
+                    margins: { top: 50, bottom: 50, left: 60, right: 50 }
+                })
 
-                const buffers = []
-                doc.on('data', buffers.push.bind(buffers))
-                doc.on('end', () => resolve(Buffer.concat(buffers)))
-                doc.on('error', reject)
 
-                // Title
-                doc.fontSize(20)
-                   .font('Helvetica-Bold')
-                   .text('OPTIMIZED RESUME', { align: 'center' })
-                   .moveDown(1.5)
+                const buffers = []
+                doc.on('data', buffers.push.bind(buffers))
+                doc.on('end', () => resolve(Buffer.concat(buffers)))
+                doc.on('error', reject)
 
-                // Content
-                doc.fontSize(11).font('Helvetica')
-                
-                const lines = content.split('\n')
-                lines.forEach(line => {
-                    const trimmedLine = line.trim()
-                    
-                    // Section headers (all caps or specific keywords)
-                    if (trimmedLine.match(/^[A-Z\s]+:?$/) || 
-                        trimmedLine.match(/^(SKILLS|EXPERIENCE|EDUCATION|SUMMARY|CERTIFICATIONS|PROJECTS|PROFESSIONAL SUMMARY|TECHNICAL SKILLS|PROFESSIONAL EXPERIENCE)/i)) {
-                        doc.moveDown(0.5)
-                           .fontSize(13)
-                           .font('Helvetica-Bold')
-                           .text(trimmedLine)
-                           .moveDown(0.3)
-                           .fontSize(11)
-                           .font('Helvetica')
-                    }
-                    // Bullet points
-                    else if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
-                        doc.text(`  ${trimmedLine}`, { indent: 20 })
-                    }
-                    // Job titles or bold items (contains pipe or year)
-                    else if (trimmedLine.includes('|') || trimmedLine.match(/\d{4}/)) {
-                        doc.font('Helvetica-Bold')
-                           .text(trimmedLine)
-                           .font('Helvetica')
-                    }
-                    // Regular text
-                    else if (trimmedLine) {
-                        doc.text(trimmedLine)
-                    } else {
-                        doc.moveDown(0.3)
-                    }
-                })
 
-                // Footer
-                doc.moveDown(2)
-                   .fontSize(8)
-                   .fillColor('#666666')
-                   .text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' })
+                const lines = content.split('\n')
+                let currentSection = ''
 
-                doc.end()
-                
-            } catch (error) {
-                reject(error)
-            }
-        })
-    }
 
-    // Generate PDF file (if needed for saving)
-    generateResumePDF(content, outputPath) {
-        return new Promise((resolve, reject) => {
-            try {
-                const doc = new PDFDocument({
-                    size: 'A4',
-                    margins: { top: 50, bottom: 50, left: 50, right: 50 }
-                })
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i]
+                    const trimmed = line.trim()
+                    const nextLine = lines[i + 1]?.trim() || ''
+                    const prevLine = lines[i - 1]?.trim() || ''
+                    
+                    // Skip empty lines but add space
+                    if (!trimmed) {
+                        if (i > 0 && prevLine) doc.moveDown(0.3)
+                        continue
+                    }
 
-                const stream = fs.createWriteStream(outputPath)
-                doc.pipe(stream)
 
-                // Title styling
-                doc.fontSize(20)
-                   .font('Helvetica-Bold')
-                   .text('OPTIMIZED RESUME', { align: 'center' })
-                   .moveDown(1.5)
+                    // ============ 1. NAME (First Line) ============
+                    if (i === 0 || (i === 1 && !lines[0].trim())) {
+                        doc.fontSize(16)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed, { align: 'center' })
+                           .moveDown(0.4)
+                        continue
+                    }
 
-                // Content styling
-                doc.fontSize(11)
-                   .font('Helvetica')
-                
-                const lines = content.split('\n')
-                
-                lines.forEach(line => {
-                    const trimmedLine = line.trim()
-                    
-                    if (trimmedLine.match(/^[A-Z\s]+:?$/) || 
-                        trimmedLine.match(/^(SKILLS|EXPERIENCE|EDUCATION|SUMMARY|CERTIFICATIONS|PROJECTS|PROFESSIONAL SUMMARY|TECHNICAL SKILLS|PROFESSIONAL EXPERIENCE)/i)) {
-                        doc.moveDown(0.5)
-                           .fontSize(13)
-                           .font('Helvetica-Bold')
-                           .text(trimmedLine, { continued: false })
-                           .moveDown(0.3)
-                           .fontSize(11)
-                           .font('Helvetica')
-                    }
-                    else if (trimmedLine.startsWith('-') || trimmedLine.startsWith('•')) {
-                        doc.text(`  ${trimmedLine}`, { indent: 20 })
-                    }
-                    else if (trimmedLine.includes('|') || trimmedLine.match(/\d{4}/)) {
-                        doc.font('Helvetica-Bold')
-                           .text(trimmedLine)
-                           .font('Helvetica')
-                    }
-                    else if (trimmedLine) {
-                        doc.text(trimmedLine)
-                    } else {
-                        doc.moveDown(0.3)
-                    }
-                })
 
-                doc.moveDown(2)
-                   .fontSize(8)
-                   .fillColor('#666666')
-                   .text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' })
+                    // ============ 2. CONTACT INFO ============
+                    if (trimmed.includes('@') || 
+                        trimmed.toLowerCase().includes('linkedin') || 
+                        trimmed.toLowerCase().includes('github') ||
+                        trimmed.toLowerCase().includes('phone') ||
+                        trimmed.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/) ||
+                        (i <= 3 && trimmed.includes('|'))) {
+                        doc.fontSize(9)
+                           .font('Helvetica')
+                           .fillColor('#333333')
+                           .text(trimmed, { align: 'center' })
+                           .moveDown(0.2)
+                        continue
+                    }
 
-                doc.end()
 
-                stream.on('finish', () => resolve(outputPath))
-                stream.on('error', reject)
-                
-            } catch (error) {
-                reject(error)
-            }
-        })
-    }
+                    // ============ 3. SECTION HEADERS (ALL CAPS) ============
+                    if (trimmed.toUpperCase() === trimmed && 
+                        trimmed.length > 2 && 
+                        trimmed.length < 50 && 
+                        !trimmed.match(/^[-•*]/) &&
+                        !trimmed.includes(':')) {
+                        
+                        currentSection = trimmed.toUpperCase()
+                        
+                        doc.moveDown(0.6)
+                           .fontSize(11)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                        
+                        // Underline
+                        const textWidth = doc.widthOfString(trimmed)
+                        const lineY = doc.y
+                        doc.moveTo(doc.x, lineY)
+                           .lineTo(doc.x + textWidth, lineY)
+                           .lineWidth(1)
+                           .strokeColor('#000000')
+                           .stroke()
+                        
+                        doc.moveDown(0.4)
+                        continue
+                    }
+
+
+                    // ============ 4. BULLET POINTS (-, •, *) ============
+                    if (trimmed.match(/^[-•*]\s/)) {
+                        const text = trimmed.replace(/^[-•*]\s+/, '')
+                        doc.fontSize(10)
+                           .font('Helvetica')
+                           .fillColor('#000000')
+                           .text('• ' + text, {
+                               indent: 15,
+                               paragraphGap: 3
+                           })
+                        continue
+                    }
+
+
+                    // ============ 5. SUB-HEADINGS WITH COLON (Frontend:, Backend:, etc) ============
+                    if (trimmed.includes(':')) {
+                        const [heading, ...rest] = trimmed.split(':')
+                        const content = rest.join(':').trim()
+                        
+                        // Heading part (bold with bullet)
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text('• ' + heading + ':', {
+                               indent: 15,
+                               continued: content.length > 0
+                           })
+                        
+                        // Content part (regular)
+                        if (content) {
+                            doc.font('Helvetica')
+                               .text(' ' + content)
+                        } else {
+                            doc.text('') // End line
+                        }
+                        
+                        doc.moveDown(0.15)
+                        continue
+                    }
+
+
+                    // ============ 6. JOB TITLES / DATES (has years) ============
+                    if (trimmed.match(/\d{4}/) && !trimmed.match(/^[-•*]/)) {
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                           .moveDown(0.15)
+                        continue
+                    }
+
+
+                    // ============ 7. PROJECT/ITEM TITLES ============
+                    // (After section header, before bullets, not too long)
+                    if (prevLine && 
+                        (prevLine.toUpperCase() === prevLine || prevLine.includes(':')) &&
+                        nextLine.match(/^[-•*]/) &&
+                        trimmed.length < 80 &&
+                        !trimmed.match(/^[-•*]/)) {
+                        
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                           .moveDown(0.15)
+                        continue
+                    }
+
+
+                    // ============ 8. COMPANY/ORGANIZATION NAMES (has | but no bullets after) ============
+                    if (trimmed.includes('|') && !nextLine.match(/^[-•*]/)) {
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                           .moveDown(0.15)
+                        continue
+                    }
+
+
+                    // ============ 9. REGULAR TEXT (everything else) ============
+                    doc.fontSize(10)
+                       .font('Helvetica')
+                       .fillColor('#000000')
+                       .text(trimmed, {
+                           align: 'left',
+                           lineGap: 2
+                       })
+                       .moveDown(0.25)
+                }
+
+
+                doc.end()
+                
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+
+    // Generate PDF file
+    generateResumePDF(content, outputPath, resumeTitle) {
+        return new Promise((resolve, reject) => {
+            try {
+                const doc = new PDFDocument({
+                    size: 'A4',
+                    margins: { top: 50, bottom: 50, left: 60, right: 50 }
+                })
+
+
+                const stream = fs.createWriteStream(outputPath)
+                doc.pipe(stream)
+
+
+                const lines = content.split('\n')
+                let currentSection = ''
+
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i]
+                    const trimmed = line.trim()
+                    const nextLine = lines[i + 1]?.trim() || ''
+                    const prevLine = lines[i - 1]?.trim() || ''
+                    
+                    if (!trimmed) {
+                        if (i > 0 && prevLine) doc.moveDown(0.3)
+                        continue
+                    }
+
+
+                    // 1. NAME
+                    if (i === 0 || (i === 1 && !lines[0].trim())) {
+                        doc.fontSize(16)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed, { align: 'center' })
+                           .moveDown(0.4)
+                        continue
+                    }
+
+
+                    // 2. CONTACT INFO
+                    if (trimmed.includes('@') || 
+                        trimmed.toLowerCase().includes('linkedin') || 
+                        trimmed.toLowerCase().includes('github') ||
+                        trimmed.toLowerCase().includes('phone') ||
+                        trimmed.match(/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/) ||
+                        (i <= 3 && trimmed.includes('|'))) {
+                        doc.fontSize(9)
+                           .font('Helvetica')
+                           .fillColor('#333333')
+                           .text(trimmed, { align: 'center' })
+                           .moveDown(0.2)
+                        continue
+                    }
+
+
+                    // 3. SECTION HEADERS
+                    if (trimmed.toUpperCase() === trimmed && 
+                        trimmed.length > 2 && 
+                        trimmed.length < 50 && 
+                        !trimmed.match(/^[-•*]/) &&
+                        !trimmed.includes(':')) {
+                        
+                        currentSection = trimmed.toUpperCase()
+                        
+                        doc.moveDown(0.6)
+                           .fontSize(11)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                        
+                        const textWidth = doc.widthOfString(trimmed)
+                        const lineY = doc.y
+                        doc.moveTo(doc.x, lineY)
+                           .lineTo(doc.x + textWidth, lineY)
+                           .lineWidth(1)
+                           .strokeColor('#000000')
+                           .stroke()
+                        
+                        doc.moveDown(0.4)
+                        continue
+                    }
+
+
+                    // 4. BULLET POINTS
+                    if (trimmed.match(/^[-•*]\s/)) {
+                        const text = trimmed.replace(/^[-•*]\s+/, '')
+                        doc.fontSize(10)
+                           .font('Helvetica')
+                           .fillColor('#000000')
+                           .text('• ' + text, {
+                               indent: 15,
+                               paragraphGap: 3
+                           })
+                        continue
+                    }
+
+
+                    // 5. SUB-HEADINGS WITH COLON
+                    if (trimmed.includes(':')) {
+                        const [heading, ...rest] = trimmed.split(':')
+                        const content = rest.join(':').trim()
+                        
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text('• ' + heading + ':', {
+                               indent: 15,
+                               continued: content.length > 0
+                           })
+                        
+                        if (content) {
+                            doc.font('Helvetica')
+                               .text(' ' + content)
+                        } else {
+                            doc.text('')
+                        }
+                        
+                        doc.moveDown(0.15)
+                        continue
+                    }
+
+
+                    // 6. JOB TITLES / DATES
+                    if (trimmed.match(/\d{4}/) && !trimmed.match(/^[-•*]/)) {
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                           .moveDown(0.15)
+                        continue
+                    }
+
+
+                    // 7. PROJECT/ITEM TITLES
+                    if (prevLine && 
+                        (prevLine.toUpperCase() === prevLine || prevLine.includes(':')) &&
+                        nextLine.match(/^[-•*]/) &&
+                        trimmed.length < 80 &&
+                        !trimmed.match(/^[-•*]/)) {
+                        
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                           .moveDown(0.15)
+                        continue
+                    }
+
+
+                    // 8. COMPANY/ORGANIZATION
+                    if (trimmed.includes('|') && !nextLine.match(/^[-•*]/)) {
+                        doc.fontSize(10)
+                           .font('Helvetica-Bold')
+                           .fillColor('#000000')
+                           .text(trimmed)
+                           .moveDown(0.15)
+                        continue
+                    }
+
+
+                    // 9. REGULAR TEXT
+                    doc.fontSize(10)
+                       .font('Helvetica')
+                       .fillColor('#000000')
+                       .text(trimmed, {
+                           align: 'left',
+                           lineGap: 2
+                       })
+                       .moveDown(0.25)
+                }
+
+
+                doc.end()
+
+
+                stream.on('finish', () => resolve(outputPath))
+                stream.on('error', reject)
+                
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
 }
 
-module.exports = new PDFGeneratorService()
+
+module.exports = new PDFGeneratorService() 

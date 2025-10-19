@@ -229,13 +229,35 @@ const optimizeResume = async (req, res) => {
 
 const downloadOptimizedResume = async (req, res) => {
     try {
-        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id }).lean()  // FIXED
-        if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
+        const resume = await resumeModel.findOne({ 
+            _id: req.params.id, 
+            user: req.user._id 
+        }).lean()
+        
+        if (!resume) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Resume not found" 
+            })
+        }
 
-        const opt = resume.optimizations?.find(o => o._id.toString() === req.params.optimizationId)
-        if (!opt) return res.status(404).json({ success: false, message: "Optimization not found" })
+        const opt = resume.optimizations?.find(
+            o => o._id.toString() === req.params.optimizationId
+        )
+        
+        if (!opt) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Optimization not found" 
+            })
+        }
 
-        const pdfBuffer = await pdfGenerator.generateResumePDFBuffer(opt.optimizedContent)
+        // Generate professional PDF (no title, formatted content)
+        const pdfBuffer = await pdfGenerator.generateResumePDFBuffer(
+            opt.optimizedContent,
+            resume.title // Pass resume title for metadata only, not displayed
+        )
+        
         const filename = `${resume.title.replace(/[^a-z0-9]/gi, '_')}_optimized.pdf`
         
         res.set({
@@ -243,10 +265,16 @@ const downloadOptimizedResume = async (req, res) => {
             'Content-Disposition': `attachment; filename="${filename}"`,
             'Content-Length': pdfBuffer.length
         }).send(pdfBuffer)
+        
     } catch (error) {
-        res.status(500).json({ success: false, message: "Failed to generate download" })
+        console.error('Download optimized resume error:', error)
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to generate download" 
+        })
     }
 }
+
 
 const updateResume = async (req, res) => {
     try {
