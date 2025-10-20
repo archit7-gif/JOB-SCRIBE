@@ -66,7 +66,7 @@ Return ONLY the optimized resume text. No JSON, no markdown.`
             const response = await this.genAI.models.generateContent({
                 model: "gemini-2.0-flash",
                 contents: prompt,
-                config: { temperature: 0.4 }
+                config: { temperature: 0.6 }
             })
 
             if (!response?.text) return this.getFallbackOptimization(resumeContent)
