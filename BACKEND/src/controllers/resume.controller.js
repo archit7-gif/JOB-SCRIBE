@@ -1,3 +1,5 @@
+
+
 const resumeModel = require('../models/resume.model')
 const { validationResult } = require('express-validator')
 const fileParserService = require('../services/fileParser.service')
@@ -171,7 +173,7 @@ const optimizeResume = async (req, res) => {
         const { analysisId } = req.body
         if (!analysisId) return res.status(400).json({ success: false, message: "analysisId required" })
 
-        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id })  // FIXED
+        const resume = await resumeModel.findOne({ _id: req.params.id, user: req.user._id })
         if (!resume) return res.status(404).json({ success: false, message: "Resume not found" })
 
         const analysis = resume.aiAnalyses?.find(a => a._id.toString() === analysisId)
@@ -184,13 +186,92 @@ const optimizeResume = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 message: "Optimization retrieved from cache",
-                data: { resumeId: resume._id, optimizationId: existingOpt._id, optimization: existingOpt, fromCache: true }
+                data: { 
+                    resumeId: resume._id, 
+                    optimizationId: existingOpt._id, 
+                    optimization: {
+                        jobTitle: existingOpt.jobTitle,
+                        optimizedContent: existingOpt.optimizedContent,
+                        appliedSuggestions: existingOpt.appliedSuggestions,
+                        createdAt: existingOpt.createdAt
+                    }, 
+                    fromCache: true 
+                }
             })
         }
 
-        const result = await aiService.generateResumeOptimization(resume.content, analysis.jobDescription, analysis.suggestions)
-        if (!result.success) return res.status(500).json({ success: false, message: "Optimization failed" })
+        console.log('🔄 Starting optimization process...')
 
+        // STEP 1: Extract links from original resume (if not done)
+        if (!resume.extractedLinks || !resume.extractedLinks.personalInfo) {
+            console.log('📎 Extracting links from original resume...')
+            const originalData = await aiService.extractStructuredJSON(resume.content)
+            
+            resume.extractedLinks = {
+                personalInfo: {
+                    linkedin: originalData.personalInfo?.linkedin || null,
+                    github: originalData.personalInfo?.github || null,
+                    twitter: originalData.personalInfo?.twitter || null,
+                    portfolio: originalData.personalInfo?.portfolio || null,
+                    email: originalData.personalInfo?.email || null
+                },
+                projects: (originalData.projects || []).map(p => ({
+                    name: p.name,
+                    link: p.link || null,
+                    github: p.github || null,
+                    liveDemo: p.liveDemo || null,
+                    demo: p.demo || null,
+                    url: p.url || null
+                }))
+            }
+            
+            await resume.save()
+            console.log('✅ Links extracted:', resume.extractedLinks.projects.length, 'projects')
+        }
+
+        // STEP 2: AI optimizes resume content
+        console.log('🤖 AI optimizing resume...')
+        const result = await aiService.generateResumeOptimization(resume.content, analysis.jobDescription, analysis.suggestions)
+        if (!result.success) {
+            return res.status(500).json({ success: false, message: "Optimization failed" })
+        }
+
+        // STEP 3: Extract structure from optimized content IMMEDIATELY
+        console.log('📊 Extracting structure from optimized content...')
+        const optimizedStructure = await aiService.extractStructuredJSON(result.optimizedContent)
+        
+        // STEP 4: Inject original links into optimized structure
+        console.log('🔗 Injecting original links...')
+        const finalStructure = {
+            ...optimizedStructure,
+            personalInfo: {
+                ...optimizedStructure.personalInfo,
+                linkedin: resume.extractedLinks.personalInfo.linkedin || optimizedStructure.personalInfo.linkedin,
+                github: resume.extractedLinks.personalInfo.github || optimizedStructure.personalInfo.github,
+                twitter: resume.extractedLinks.personalInfo.twitter || optimizedStructure.personalInfo.twitter,
+                portfolio: resume.extractedLinks.personalInfo.portfolio || optimizedStructure.personalInfo.portfolio,
+                email: resume.extractedLinks.personalInfo.email || optimizedStructure.personalInfo.email
+            },
+            projects: optimizedStructure.projects.map((project, index) => {
+                const originalProject = resume.extractedLinks.projects.find(p => 
+                    p.name.toLowerCase().includes(project.name.toLowerCase()) ||
+                    project.name.toLowerCase().includes(p.name.toLowerCase())
+                )
+                
+                return {
+                    ...project,
+                    link: originalProject?.link || project.link,
+                    github: originalProject?.github || project.github,
+                    liveDemo: originalProject?.liveDemo || project.liveDemo,
+                    demo: originalProject?.demo || project.demo,
+                    url: originalProject?.url || project.url
+                }
+            })
+        }
+
+        console.log('✅ Final structure prepared with', finalStructure.projects.length, 'projects')
+
+        // STEP 5: Store everything
         const newOpt = {
             analysisId: analysis._id,
             jobDescription: analysis.jobDescription,
@@ -199,6 +280,7 @@ const optimizeResume = async (req, res) => {
             originalContent: resume.content,
             optimizedContent: result.optimizedContent,
             appliedSuggestions: analysis.suggestions,
+            structuredData: finalStructure,  // STORE STRUCTURED VERSION
             createdAt: new Date()
         }
         
@@ -206,6 +288,8 @@ const optimizeResume = async (req, res) => {
         resume.optimizations.unshift(newOpt)
         if (resume.optimizations.length > 10) resume.optimizations = resume.optimizations.slice(0, 10)
         await resume.save()
+
+        console.log('💾 Optimization saved with structured data')
 
         res.status(200).json({
             success: true,
@@ -223,9 +307,11 @@ const optimizeResume = async (req, res) => {
             }
         })
     } catch (error) {
+        console.error('❌ Optimization error:', error)
         res.status(500).json({ success: false, message: "Resume optimization failed" })
     }
 }
+
 
 const downloadOptimizedResume = async (req, res) => {
     try {
@@ -235,28 +321,109 @@ const downloadOptimizedResume = async (req, res) => {
         }).lean()
         
         if (!resume) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "Resume not found" 
-            })
+            return res.status(404).json({ success: false, message: "Resume not found" })
         }
 
-        const opt = resume.optimizations?.find(
-            o => o._id.toString() === req.params.optimizationId
-        )
+        // Handle undefined or missing optimizationId
+        let opt;
+        const optimizationId = req.params.optimizationId
+        
+        if (optimizationId && optimizationId !== 'undefined' && optimizationId !== 'null') {
+            console.log('📋 Using specific optimization:', optimizationId)
+            opt = resume.optimizations?.find(o => o._id.toString() === optimizationId)
+        } 
+        
+        // Fallback to latest optimization
+        if (!opt && resume.optimizations && resume.optimizations.length > 0) {
+            console.log('⚠️ OptimizationId missing/invalid, using latest optimization')
+            opt = resume.optimizations[0]  // Most recent
+        }
         
         if (!opt) {
             return res.status(404).json({ 
                 success: false, 
-                message: "Optimization not found" 
+                message: "No optimizations found. Please optimize resume first." 
             })
         }
 
-        // Generate professional PDF (no title, formatted content)
-        const pdfBuffer = await pdfGenerator.generateResumePDFBuffer(
-            opt.optimizedContent,
-            resume.title // Pass resume title for metadata only, not displayed
-        )
+        console.log('📄 Generating PDF from optimization:', opt._id)
+        console.log('📊 Has structuredData:', !!opt.structuredData)
+        
+        let structuredData = opt.structuredData
+        
+        // Fallback for old optimizations without structuredData
+        if (!structuredData) {
+            console.log('⚠️ Old optimization without structuredData, extracting...')
+            structuredData = await aiService.extractStructuredJSON(opt.optimizedContent)
+            
+            // Inject links if available
+            if (resume.extractedLinks) {
+                structuredData.personalInfo = {
+                    ...structuredData.personalInfo,
+                    linkedin: resume.extractedLinks.personalInfo?.linkedin || structuredData.personalInfo.linkedin,
+                    github: resume.extractedLinks.personalInfo?.github || structuredData.personalInfo.github,
+                    twitter: resume.extractedLinks.personalInfo?.twitter || structuredData.personalInfo.twitter,
+                    portfolio: resume.extractedLinks.personalInfo?.portfolio || structuredData.personalInfo.portfolio,
+                    email: resume.extractedLinks.personalInfo?.email || structuredData.personalInfo.email
+                }
+                
+                // Inject project links
+                if (resume.extractedLinks.projects && resume.extractedLinks.projects.length > 0) {
+                    structuredData.projects = (structuredData.projects || []).map(project => {
+                        const originalProject = resume.extractedLinks.projects.find(p => 
+                            p.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(project.name.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+                            project.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(p.name.toLowerCase().replace(/[^a-z0-9]/g, ''))
+                        )
+                        
+                        if (originalProject) {
+                            return {
+                                ...project,
+                                link: originalProject.link || project.link,
+                                github: originalProject.github || project.github,
+                                liveDemo: originalProject.liveDemo || project.liveDemo,
+                                demo: originalProject.demo || project.demo,
+                                url: originalProject.url || project.url
+                            }
+                        }
+                        
+                        return project
+                    })
+                }
+            }
+        }
+        
+        console.log('✅ Final data for PDF:', {
+            name: structuredData.personalInfo?.name,
+            email: structuredData.personalInfo?.email,
+            projects: structuredData.projects?.length || 0,
+            experience: structuredData.experience?.length || 0,
+            projectLinks: structuredData.projects?.map(p => ({ 
+                name: p.name, 
+                hasLink: !!(p.link || p.github || p.liveDemo) 
+            }))
+        })
+
+        // Generate HTML
+        const { generateResumeHTML } = require('../services/resumeTemplate.service')
+        const html = generateResumeHTML(structuredData)
+        
+        // Generate PDF
+        const puppeteer = require('puppeteer')
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        })
+        
+        const page = await browser.newPage()
+        await page.setContent(html, { waitUntil: 'networkidle0' })
+        
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '0', bottom: '0', left: '0', right: '0' }
+        })
+        
+        await browser.close()
         
         const filename = `${resume.title.replace(/[^a-z0-9]/gi, '_')}_optimized.pdf`
         
@@ -266,14 +433,19 @@ const downloadOptimizedResume = async (req, res) => {
             'Content-Length': pdfBuffer.length
         }).send(pdfBuffer)
         
+        console.log('✅ PDF generated and sent successfully')
+        
     } catch (error) {
-        console.error('Download optimized resume error:', error)
+        console.error('❌ Download error:', error)
         res.status(500).json({ 
             success: false, 
-            message: "Failed to generate download" 
+            message: "Failed to generate download",
+            error: error.message
         })
     }
 }
+
+
 
 
 const updateResume = async (req, res) => {

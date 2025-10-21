@@ -36,5 +36,6 @@ router.post('/:id/analyze', aiAnalysisRateLimit, validateResumeAnalysis, analyze
 router.post('/:id/optimize', aiAnalysisRateLimit, validateResumeOptimization, optimizeResume)
 router.get('/:id/download/:optimizationId', downloadOptimizedResume)
 
+
 module.exports = router
 

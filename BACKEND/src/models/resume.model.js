@@ -1,3 +1,5 @@
+
+
 const mongoose = require('mongoose')
 
 const resumeSchema = new mongoose.Schema({
@@ -10,7 +12,26 @@ const resumeSchema = new mongoose.Schema({
     fileSize: { type: Number },
     mimeType: { type: String },
     
-    // AI Analysis history (Step 1: Suggestions)
+    // NEW: Store extracted links from original resume
+    extractedLinks: {
+        personalInfo: {
+            linkedin: String,
+            github: String,
+            twitter: String,
+            portfolio: String,
+            email: String
+        },
+        projects: [{
+            name: String,
+            link: String,
+            github: String,
+            liveDemo: String,
+            demo: String,
+            url: String
+        }]
+    },
+    
+    // AI Analysis history
     aiAnalyses: [{
         jobDescription: String,
         jobDescHash: String,
@@ -23,32 +44,43 @@ const resumeSchema = new mongoose.Schema({
         createdAt: { type: Date, default: Date.now }
     }],
     
-    // AI Optimization history (Step 2: Optimized resumes)
-    optimizations: [{
-        analysisId: mongoose.Schema.Types.ObjectId,  // Links to aiAnalyses
-        jobDescription: String,
-        jobDescHash: String,
-        jobTitle: String,
-        originalContent: String,
-        optimizedContent: String,
-        appliedSuggestions: [String],
-        createdAt: { type: Date, default: Date.now }
-    }]
+    // AI Optimization history
+optimizations: [{
+    analysisId: mongoose.Schema.Types.ObjectId,
+    jobDescription: String,
+    jobDescHash: String,
+    jobTitle: String,
+    originalContent: String,
+    optimizedContent: String,
+    appliedSuggestions: [String],
+    
+    // NEW: Store structured version at optimization time
+    structuredData: {
+        personalInfo: Object,
+        summary: String,
+        skills: Object,
+        experience: Array,
+        projects: Array,
+        education: Array,
+        certifications: Array,
+        languages: Array
+    },
+    
+    createdAt: { type: Date, default: Date.now }
+}]
+
 }, {
     timestamps: true
 })
 
 resumeSchema.index({ user: 1, contentHash: 1 })
-
-// After schema definition, before model creation
-resumeSchema.index({ user: 1, updatedAt: -1 }) // Fast user resume list sorting
-resumeSchema.index({ user: 1, type: 1 }) // Filter by type
-resumeSchema.index({ 'aiAnalyses.jobDescHash': 1 }) // Fast cache lookup
-resumeSchema.index({ 'optimizations.jobDescHash': 1 }) // Fast optimization lookup
-
+resumeSchema.index({ user: 1, updatedAt: -1 })
+resumeSchema.index({ user: 1, type: 1 })
+resumeSchema.index({ 'aiAnalyses.jobDescHash': 1 })
+resumeSchema.index({ 'optimizations.jobDescHash': 1 })
 
 const resumeModel = mongoose.model('resume', resumeSchema)
 
-
 module.exports = resumeModel
+
 
