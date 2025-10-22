@@ -392,16 +392,21 @@ const downloadOptimizedResume = async (req, res) => {
             }
         }
         
-        console.log('✅ Final data for PDF:', {
-            name: structuredData.personalInfo?.name,
-            email: structuredData.personalInfo?.email,
-            projects: structuredData.projects?.length || 0,
-            experience: structuredData.experience?.length || 0,
-            projectLinks: structuredData.projects?.map(p => ({ 
-                name: p.name, 
-                hasLink: !!(p.link || p.github || p.liveDemo) 
-            }))
-        })
+console.log('✅ Final data for PDF:', {
+    name: structuredData.personalInfo?.name,
+    email: structuredData.personalInfo?.email,
+    linkedin: structuredData.personalInfo?.linkedin,  // ADD THIS
+    github: structuredData.personalInfo?.github,      // ADD THIS
+    projects: structuredData.projects?.length || 0,
+    experience: structuredData.experience?.length || 0,
+    projectLinks: structuredData.projects?.map(p => ({ 
+        name: p.name, 
+        link: p.link,           // CHANGE: Show actual URL
+        github: p.github,       // CHANGE: Show actual URL
+        liveDemo: p.liveDemo    // CHANGE: Show actual URL
+    }))
+})
+
 
         // Generate HTML
         const { generateResumeHTML } = require('../services/resumeTemplate.service')
