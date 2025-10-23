@@ -2,7 +2,8 @@
 
 
 
-import { IoDownload, IoClose } from 'react-icons/io5'
+import { IoDownload, IoClose, IoCopy } from 'react-icons/io5'
+import { toast } from 'react-toastify'
 import Modal from '../common/Modal'
 import Button from '../common/Button'
 import './OptimizedResumePreview.css'
@@ -15,6 +16,11 @@ const OptimizedResumePreview = ({
   downloading = false 
 }) => {
   if (!optimization) return null
+
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(optimization.optimizedContent)
+    toast.success('Resume copied to clipboard')
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="large" title="Optimized Resume Preview">
@@ -39,12 +45,19 @@ const OptimizedResumePreview = ({
             Close
           </Button>
           <Button 
+            variant="secondary" 
+            onClick={handleCopyToClipboard}
+            icon={<IoCopy />}
+          >
+            Copy Text
+          </Button>
+          <Button 
             variant="primary" 
             onClick={onDownload}
             loading={downloading}
             icon={<IoDownload />}
           >
-            Download PDF
+            Download TXT
           </Button>
         </div>
       </div>
@@ -53,3 +66,4 @@ const OptimizedResumePreview = ({
 }
 
 export default OptimizedResumePreview
+

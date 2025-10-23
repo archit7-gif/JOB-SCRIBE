@@ -1,5 +1,4 @@
 
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
@@ -95,7 +94,12 @@ const ResumeDetail = () => {
       dispatch(setAnalyzing(true))
       const response = await resumeService.analyzeResume(id, data)
       if (response.success) {
-        toast.success(response.message)
+        // Check if from cache
+        if (response.data.fromCache) {
+          toast.info('Analysis retrieved from cache')
+        } else {
+          toast.success('Resume analyzed successfully')
+        }
         fetchResumeDetails()
         setActiveTab('history')
       }
@@ -111,8 +115,16 @@ const ResumeDetail = () => {
       dispatch(setOptimizing(true))
       const response = await resumeService.optimizeResume(id, { analysisId })
       if (response.success) {
-        toast.success('Resume optimized successfully')
-        setCurrentOptimization(response.data.optimization)
+        // Check if from cache
+        if (response.data.fromCache) {
+          toast.info('Optimization retrieved from cache')
+        } else {
+          toast.success('Resume optimized successfully')
+        }
+        setCurrentOptimization({
+          ...response.data.optimization,
+          optimizationId: response.data.optimizationId
+        })
         setShowPreviewModal(true)
         fetchResumeDetails()
       }
@@ -128,12 +140,15 @@ const ResumeDetail = () => {
 
     try {
       setDownloading(true)
-      const blob = await resumeService.downloadOptimizedResume(id, currentOptimization._id)
+      const blob = await resumeService.downloadOptimizedResume(
+        id, 
+        currentOptimization.optimizationId || currentOptimization._id
+      )
       
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `${selectedResume.title}_optimized.pdf`
+      link.download = `${selectedResume.title}_optimized.txt`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -357,4 +372,5 @@ const ResumeDetail = () => {
 }
 
 export default ResumeDetail
+
 
