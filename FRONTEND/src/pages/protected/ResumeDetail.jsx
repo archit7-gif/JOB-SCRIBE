@@ -23,6 +23,8 @@ import {
 import resumeService from '../../services/resumeService'
 import './ResumeDetail.css'
 
+
+
 const ResumeDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -89,51 +91,66 @@ const ResumeDetail = () => {
     }
   }
 
-  const handleAnalyze = async (data) => {
-    try {
-      dispatch(setAnalyzing(true))
-      const response = await resumeService.analyzeResume(id, data)
-      if (response.success) {
-        // Check if from cache
-        if (response.data.fromCache) {
-          toast.info('Analysis retrieved from cache')
-        } else {
-          toast.success('Resume analyzed successfully')
-        }
-        fetchResumeDetails()
-        setActiveTab('history')
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Analysis failed')
-    } finally {
-      dispatch(setAnalyzing(false))
-    }
-  }
 
-  const handleOptimize = async (analysisId) => {
-    try {
-      dispatch(setOptimizing(true))
-      const response = await resumeService.optimizeResume(id, { analysisId })
-      if (response.success) {
-        // Check if from cache
-        if (response.data.fromCache) {
-          toast.info('Optimization retrieved from cache')
-        } else {
-          toast.success('Resume optimized successfully')
-        }
-        setCurrentOptimization({
-          ...response.data.optimization,
-          optimizationId: response.data.optimizationId
-        })
-        setShowPreviewModal(true)
-        fetchResumeDetails()
+const handleAnalyze = async (data) => {
+  try {
+    dispatch(setAnalyzing(true))
+    const response = await resumeService.analyzeResume(id, data)
+    if (response.success) {
+      // Check if from cache
+      if (response.data.fromCache) {
+        toast.info('Analysis retrieved from cache')
+      } else {
+        toast.success('Resume analyzed successfully')
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Optimization failed')
-    } finally {
-      dispatch(setOptimizing(false))
+      fetchResumeDetails()
+      setActiveTab('history')
     }
+  } catch (error) {
+    // Handle rate limit error
+    if (error.response?.status === 429) {
+      toast.error(error.response.data.message)
+    } else {
+      toast.error(error.response?.data?.message || 'Analysis failed')
+    }
+  } finally {
+    dispatch(setAnalyzing(false))
   }
+}
+
+const handleOptimize = async (analysisId) => {
+  try {
+    dispatch(setOptimizing(true))
+    const response = await resumeService.optimizeResume(id, { analysisId })
+    if (response.success) {
+      // Check if from cache
+      if (response.data.fromCache) {
+        toast.info('Optimization retrieved from cache')
+      } else {
+        toast.success('Resume optimized successfully')
+      }
+      setCurrentOptimization({
+        ...response.data.optimization,
+        optimizationId: response.data.optimizationId
+      })
+      setShowPreviewModal(true)
+      fetchResumeDetails()
+    }
+  } catch (error) {
+    // Handle rate limit error
+    if (error.response?.status === 429) {
+      toast.error(error.response.data.message)
+    } else {
+      toast.error(error.response?.data?.message || 'Optimization failed')
+    }
+    // Re-throw error so AIAnalysisCard can also catch it
+    throw error
+  } finally {
+    dispatch(setOptimizing(false))
+  }
+}
+
+
 
   const handleDownload = async () => {
     if (!currentOptimization) return

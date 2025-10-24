@@ -1,18 +1,35 @@
 
 import { useState } from 'react'
 import { IoChevronDown, IoChevronUp, IoTrophy, IoWarning, IoKey, IoConstruct } from 'react-icons/io5'
-import Button from '../common/Button'  // ADD THIS LINE
+import Button from '../common/Button'
 import ProgressBar from '../common/ProgressBar'
 import { formatDate } from '../../utils/formatters'
 import './AIAnalysisCard.css'
 
 const AIAnalysisCard = ({ analysis, onOptimize, optimizing = false }) => {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [rateLimitError, setRateLimitError] = useState(null)
 
   const getScoreColor = (score) => {
     if (score >= 80) return 'var(--color-success)'
     if (score >= 60) return 'var(--color-warning)'
     return 'var(--color-danger)'
+  }
+
+  const handleOptimizeClick = async () => {
+    setRateLimitError(null)
+    try {
+      await onOptimize(analysis._id)
+    } catch (err) {
+      // Handle rate limit error (429)
+      if (err.response?.status === 429) {
+        const errorData = err.response.data
+        setRateLimitError({
+          message: errorData.message,
+          retryAfter: errorData.retryAfter
+        })
+      }
+    }
   }
 
   return (
@@ -102,11 +119,23 @@ const AIAnalysisCard = ({ analysis, onOptimize, optimizing = false }) => {
             </div>
           )}
 
+          {/* Rate Limit Error Message */}
+          {rateLimitError && (
+            <div className="rate-limit-warning">
+              <IoWarning />
+              <div className="rate-limit-content">
+                <strong>{rateLimitError.message}</strong>
+                <p>Please try again in {rateLimitError.retryAfter}</p>
+              </div>
+            </div>
+          )}
+
           <div className="analysis-actions">
             <Button
               variant="primary"
-              onClick={() => onOptimize(analysis._id)}
+              onClick={handleOptimizeClick}
               loading={optimizing}
+              disabled={optimizing}
               fullWidth
             >
               Generate Optimized Resume

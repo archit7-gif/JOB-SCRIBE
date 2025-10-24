@@ -10,40 +10,118 @@ class AIService {
     }
 
     // Analyze resume against job description
-    async analyzeResumeForJob(resumeContent, jobDescription) {
-        try {
-            if (!this.genAI) return this.getFallbackAnalysis()
+async analyzeResumeForJob(resumeContent, jobDescription) {
+    try {
+        if (!this.genAI) return this.getFallbackAnalysis()
 
-            const prompt = `Analyze this resume against the job description. Return only valid JSON:
+        const prompt = `You are an expert ATS analyzer. Analyze how well this resume matches the job description and provide a REALISTIC match score.
 
-{"matchScore":75,"strengths":["..."],"suggestions":["..."],"missingKeywords":["..."],"sectionsToImprove":["..."]}
+RESUME:
+${resumeContent.substring(0, 5000)}
 
-RESUME: ${resumeContent.substring(0, 5000)}
-JOB: ${jobDescription.substring(0, 2000)}`
+JOB DESCRIPTION:
+${jobDescription.substring(0, 2000)}
 
-            const response = await this.genAI.models.generateContent({
-                model: "gemini-2.0-flash",
-                contents: prompt,
-                config: { temperature: 0.3 }
-            })
+SCORING GUIDELINES (BE REALISTIC):
+- 90-100%: Perfect match - all key skills, experience level matches exactly
+- 70-85%: Strong match - most skills present, experience close to requirements
+- 50-70%: Moderate match - some skills match, experience level differs
+- 30-50%: Weak match - few relevant skills, experience significantly different
+- 0-30%: Poor match - completely different field or no relevant skills
 
-            if (!response?.text) return this.getFallbackAnalysis()
+YOUR TASK:
+1. Calculate match score based on:
+   - Skills overlap (40%)
+   - Experience relevance (30%)
+   - Keywords presence (20%)
+   - Education/certifications fit (10%)
 
-            const analysis = JSON.parse(this.cleanJSON(response.text.trim()))
-            if (!this.isValid(analysis)) return this.getFallbackAnalysis()
+2. List specific strengths (what matches well)
+3. Provide 3-5 actionable improvement suggestions
+4. Identify missing keywords from job description
+5. List resume sections needing improvement
 
-            return {
-                matchScore: analysis.matchScore || 0,
-                strengths: analysis.strengths?.length > 0 ? analysis.strengths : ["Resume has relevant experience"],
-                suggestions: analysis.suggestions?.length > 0 ? analysis.suggestions : ["Resume is well-structured"],
-                missingKeywords: analysis.missingKeywords || [],
-                sectionsToImprove: analysis.sectionsToImprove || []
+Return ONLY valid JSON (no explanation):
+{
+  "matchScore": <realistic number 0-100>,
+  "strengths": ["strength 1", "strength 2", "strength 3"],
+  "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"],
+  "missingKeywords": ["keyword1", "keyword2", "keyword3"],
+  "sectionsToImprove": ["section1", "section2"]
+}`
+
+        const response = await this.genAI.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+            config: { 
+                temperature: 0.4,  // Slightly higher for varied scores
+                maxOutputTokens: 1500
             }
-        } catch (error) {
-            console.error('Analysis error:', error)
-            return this.getFallbackAnalysis()
+        })
+
+        if (!response?.text) return this.getFallbackAnalysis()
+
+        const cleaned = this.cleanJSON(response.text.trim())
+        const analysis = JSON.parse(cleaned)
+
+        // Validate match score
+        if (!analysis.matchScore || 
+            typeof analysis.matchScore !== 'number' || 
+            analysis.matchScore < 0 || 
+            analysis.matchScore > 100) {
+            console.warn('⚠️ Invalid match score from AI, calculating fallback...')
+            analysis.matchScore = this.calculateBasicMatchScore(resumeContent, jobDescription)
         }
+
+        if (!this.isValid(analysis)) return this.getFallbackAnalysis()
+
+        return {
+            matchScore: Math.round(analysis.matchScore),
+            strengths: analysis.strengths?.length > 0 ? analysis.strengths : ["Resume structure is clear"],
+            suggestions: analysis.suggestions?.length > 0 ? analysis.suggestions : ["Consider adding more keywords"],
+            missingKeywords: analysis.missingKeywords || [],
+            sectionsToImprove: analysis.sectionsToImprove || []
+        }
+    } catch (error) {
+        console.error('Analysis error:', error)
+        return this.getFallbackAnalysis()
     }
+}
+
+// Add this helper method after analyzeResumeForJob
+calculateBasicMatchScore(resumeContent, jobDescription) {
+    try {
+        const resumeLower = resumeContent.toLowerCase()
+        const jobLower = jobDescription.toLowerCase()
+        
+        // Extract meaningful keywords from job description
+        const stopWords = new Set([
+            'the', 'and', 'for', 'with', 'this', 'that', 'from', 'have', 'will',
+            'your', 'are', 'can', 'you', 'our', 'their', 'should', 'would', 'could'
+        ])
+        
+        const jobKeywords = jobLower
+            .match(/\b[a-z]{3,}\b/g)
+            ?.filter(word => !stopWords.has(word)) || []
+        
+        if (jobKeywords.length === 0) return 50
+        
+        // Count keyword matches
+        const matchedKeywords = jobKeywords.filter(keyword => resumeLower.includes(keyword))
+        const matchPercentage = (matchedKeywords.length / jobKeywords.length) * 100
+        
+        // Scale to realistic range (25-85)
+        const scaledScore = Math.min(85, Math.max(25, Math.round(matchPercentage)))
+        
+        console.log(`📊 Keyword-based score: ${scaledScore}% (${matchedKeywords.length}/${jobKeywords.length} keywords matched)`)
+        
+        return scaledScore
+    } catch (error) {
+        console.error('Keyword matching error:', error)
+        return 50
+    }
+}
+
 
     // Generate optimized resume content
 async generateResumeOptimization(resumeContent, jobDescription, suggestions) {
