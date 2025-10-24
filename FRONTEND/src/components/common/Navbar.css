@@ -1,8 +1,11 @@
 
 
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%; /* Add this */
   background: var(--color-card-bg);
   border-bottom: 1px solid var(--color-border);
   z-index: 100;

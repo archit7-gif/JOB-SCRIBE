@@ -10,7 +10,7 @@ const Welcome = () => {
         <div className="hero-content">
           <div className="hero-badge">
             <IoSparkles size={16} />
-            <span>AI-Powered Job Hunt</span>
+            <span>AI-Powered Job Search</span>
           </div>
           <h1 className="hero-title">
             Land Your Dream Job with <span className="highlight">Smart Resume Optimization</span>
@@ -33,7 +33,6 @@ const Welcome = () => {
 
       {/* How It Works Section */}
       <section className="process-section">
-        
         <div className="process-grid">
           <div className="process-card">
             <div className="process-number">01</div>
@@ -64,44 +63,46 @@ const Welcome = () => {
             </div>
             <h3 className="process-title">Get Optimized</h3>
             <p className="process-description">
-              Receive AI-tailored resumes for each job. Download and apply with confidence.
+              Receive AI-tailored resumes for each job. Download optimized text and apply with confidence.
             </p>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="features-section">
-        <div className="features-container">
-          <h2 className="features-title">Everything You Need to Succeed</h2>
-          <div className="features-grid">
-            <div className="feature-item">
-              <IoCheckmarkCircle />
-              <span>AI Resume Optimization</span>
-            </div>
-            <div className="feature-item">
-              <IoCheckmarkCircle />
-              <span>Application Tracking</span>
-            </div>
-            <div className="feature-item">
-              <IoCheckmarkCircle />
-              <span>Notes Management</span>
-            </div>
-            <div className="feature-item">
-              <IoCheckmarkCircle />
-              <span>Match Score Analysis</span>
-            </div>
-            <div className="feature-item">
-              <IoCheckmarkCircle />
-              <span>Status Management</span>
-            </div>
-            <div className="feature-item">
-              <IoCheckmarkCircle />
-              <span>PDF Export</span>
-            </div>
-          </div>
-        </div>
-      </section>
+{/* Features Section */}
+<section className="features-section">
+  <div className="features-container">
+    <h2 className="features-title">Features in Your Dashboard</h2>
+    <div className="features-grid">
+      <div className="feature-item">
+        <IoCheckmarkCircle />
+        <span>Upload & Store Resumes</span>
+      </div>
+      <div className="feature-item">
+        <IoCheckmarkCircle />
+        <span>AI-Powered Optimization</span>
+      </div>
+      <div className="feature-item">
+        <IoCheckmarkCircle />
+        <span>Track Job Applications</span>
+      </div>
+      <div className="feature-item">
+        <IoCheckmarkCircle />
+        <span>Resume Match Scoring</span>
+      </div>
+      <div className="feature-item">
+        <IoCheckmarkCircle />
+        <span>Organize Interview Notes</span>
+      </div>
+      <div className="feature-item">
+        <IoCheckmarkCircle />
+        <span>Download Optimized Text</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 
       {/* CTA Section */}
       <section className="cta-section">

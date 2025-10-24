@@ -46,58 +46,106 @@ JOB: ${jobDescription.substring(0, 2000)}`
     }
 
     // Generate optimized resume content
-    async generateResumeOptimization(resumeContent, jobDescription, suggestions) {
-        try {
-            if (!this.genAI) return this.getFallbackOptimization(resumeContent)
+async generateResumeOptimization(resumeContent, jobDescription, suggestions) {
+    try {
+        if (!this.genAI) return this.getFallbackOptimization(resumeContent)
 
-            const prompt = `You are an expert ATS resume optimizer. Rewrite this resume to perfectly match the job description while staying 100% truthful.
+const prompt = `You are an expert resume strategist and ATS optimization specialist. Your task is to rewrite and enhance the following resume to perfectly match the target job title and job description, while keeping every detail authentic and realistic.
 
+====================
 ORIGINAL RESUME:
 ${resumeContent}
 
-TARGET JOB:
+TARGET JOB DESCRIPTION:
 ${jobDescription}
+====================
 
-SUGGESTIONS TO APPLY:
-${suggestions.join("\n- ")}
+YOUR GOALS:
+1. **Optimize for ATS (Applicant Tracking Systems):**
+   - Ensure the rewritten resume achieves a 90+ ATS compatibility score.
+   - Naturally insert keywords, tools, and technical terms directly from the job description.
+   - Use correct naming conventions (e.g., “Node.js” instead of “Node”).
 
-OPTIMIZATION RULES:
-1. Rewrite 60-80% of content to match job requirements
-2. If fresher → Make projects prominent, DO NOT create fake work experience
-3. Use job keywords naturally, quantify achievements with metrics
-4. Keep professional structure and formatting
-5. FORBIDDEN: Fake companies, "| null", invented certifications, hallucinated experience
+2. **Enhance Professional Impact:**
+   - Make the language powerful, crisp, and results-driven.
+   - Use action verbs like “Developed”, “Built”, “Optimized”, “Implemented”.
+   - Emphasize measurable outcomes, performance improvements, or project impact wherever possible.
 
-OUTPUT: Complete optimized resume text (no JSON, no markdown, start with candidate name)`
+3. **Align Content With the Target Role:**
+   - Adjust summary, skills, and project descriptions to match the tone, scope, and priorities of the target job.
+   - Keep all original facts, companies, roles, and education intact, but rephrase and reorder them for clarity and relevance.
+   - Reorganize sections to highlight the most job-relevant details first.
 
-            const response = await this.genAI.models.generateContent({
-                model: "gemini-2.0-flash",
-                contents: prompt,
-                config: { temperature: 0.5, maxOutputTokens: 3500 }
+4. **Improve Structure and Clarity:**
+   - Keep formatting professional, clean, and logical.
+   - Maintain proper bullet hierarchy, spacing, and readability.
+   - Ensure consistent tense, capitalization, and punctuation.
+
+5. **Upgrade Project and Skills Presentation:**
+   - Rewrite project summaries to show technical depth and business impact.
+   - Mention tools, frameworks, deployment, scalability, or testing details where relevant.
+   - Group skills logically (Frontend, Backend, Database, Tools, etc.) and prioritize those matching the job.
+
+STRICT RULES:
+- Do NOT invent fake experience, certifications, or education.
+- Do NOT add unrealistic metrics or technologies the candidate never used.
+- Avoid buzzwords like “career objectives”, “goals”, or “aspirations”.
+- Remove placeholders like “TBD”, “null”, or “currently learning”.
+
+FINAL OUTPUT REQUIREMENTS:
+- Return ONLY the complete rewritten resume text.
+- Start directly with the candidate’s name (no titles like “Resume” or “Profile”).
+- Do NOT include JSON, markdown, or explanations.
+- The final version should look ready to paste into a professional resume template.
+- Rewrite around 60–80% of content while keeping true to the candidate’s actual background.
+
+Begin rewriting the resume now.`
+
+
+        const response = await this.genAI.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: prompt,
+            config: { 
+                temperature: 0.7,  // Higher temperature for more creative rewriting
+                maxOutputTokens: 4000
+            }
+        })
+
+        if (!response?.text) return this.getFallbackOptimization(resumeContent)
+
+        // ✅ FIX 1: close regex properly
+        let optimized = response.text.trim().replace(/```/g, "")
+
+        // Remove any fake sections
+        optimized = optimized.split('\n')
+            .filter(line => {
+                const lower = line.toLowerCase()
+                return !lower.includes('| null') && 
+                       !lower.includes('current focus') && 
+                       !lower.includes('career goals') &&
+                       !lower.includes('| tbd')
             })
+            .join('\n')
 
-            if (!response?.text) return this.getFallbackOptimization(resumeContent)
+        // ✅ FIX 2: correctly get first line
+        const firstLine = optimized.split('\n')[0].trim()
+        if (firstLine.toUpperCase() === 'RESUME' || firstLine.toUpperCase() === 'CV') {
+            optimized = optimized.split('\n').slice(1).join('\n').trim()
+        }
 
-            let optimized = response.text.trim().replace(/```/g,"")
-
-            // Remove fake sections
-            if (optimized.includes('| null') || /current focus|goals/i.test(optimized)) {
-                optimized = optimized.split('\n')
-                    .filter(line => !line.includes('| null') && !/current focus/i.test(line))
-                    .join('\n')
-            }
-
-            // Validate output length
-            if (optimized.length < resumeContent.length * 0.4) {
-                return this.getFallbackOptimization(resumeContent)
-            }
-
-            return { optimizedContent: optimized, success: true }
-        } catch (error) {
-            console.error('Optimization error:', error)
+        // Validate - must be at least 50% of original length
+        if (optimized.length < resumeContent.length * 0.5) {
+            console.warn('⚠️ Optimization too short, using original')
             return this.getFallbackOptimization(resumeContent)
         }
+
+        return { optimizedContent: optimized, success: true }
+        
+    } catch (error) {
+        console.error('Optimization error:', error)
+        return this.getFallbackOptimization(resumeContent)
     }
+}
 
     // Clean JSON response from AI
     cleanJSON(text) {

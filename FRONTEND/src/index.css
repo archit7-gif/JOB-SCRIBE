@@ -464,6 +464,7 @@ pre {
   display: flex;
   overflow-x: hidden; /* Add this */
   width: 100%;
+  padding-top: 60px;
 }
 
 .app-content {
