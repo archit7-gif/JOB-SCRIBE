@@ -123,7 +123,6 @@ const handleOptimize = async (analysisId) => {
     dispatch(setOptimizing(true))
     const response = await resumeService.optimizeResume(id, { analysisId })
     if (response.success) {
-      // Check if from cache
       if (response.data.fromCache) {
         toast.info('Optimization retrieved from cache')
       } else {
@@ -137,18 +136,19 @@ const handleOptimize = async (analysisId) => {
       fetchResumeDetails()
     }
   } catch (error) {
-    // Handle rate limit error
-    if (error.response?.status === 429) {
-      toast.error(error.response.data.message)
-    } else {
+    // Only show toast for non-429 errors
+    if (error.response?.status !== 429) {
       toast.error(error.response?.data?.message || 'Optimization failed')
     }
-    // Re-throw error so AIAnalysisCard can also catch it
-    throw error
+    // Don't re-throw for 429 errors (prevents card from catching it)
+    if (error.response?.status !== 429) {
+      throw error
+    }
   } finally {
     dispatch(setOptimizing(false))
   }
 }
+
 
 
 

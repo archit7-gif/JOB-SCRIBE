@@ -36,6 +36,11 @@ api.interceptors.response.use(
     // Check if this is a login or register request
     const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/register')
 
+    // Handle 429 (Rate Limit) - Don't show toast, let component handle it
+    if (status === 429) {
+      return Promise.reject(error)
+    }
+
     if (status === 401) {
       // Only logout and redirect if it's NOT a login/register request
       if (!isAuthRequest) {
@@ -72,3 +77,4 @@ api.interceptors.response.use(
 )
 
 export default api
+

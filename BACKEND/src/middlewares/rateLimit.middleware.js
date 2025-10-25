@@ -22,34 +22,34 @@ const loginRateLimit = rateLimit({
     }
 })
 
-// AI Analysis/Optimization: STRICT - 5 requests per 15 minutes per user
+// AI Analysis/Optimization: 15 requests per 24 hours per user
 const aiAnalysisRateLimit = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5,
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    max: 15, // limit each user to 15 requests per 24 hours
     message: { 
         success: false, 
-        message: 'AI rate limit exceeded. You can make 5 optimization requests per 15 minutes.' 
+        message: 'Limit exceeded. You can make 15 requests per 24 hours.' 
     },
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {
         const resetTime = req.rateLimit?.resetTime ? new Date(req.rateLimit.resetTime) : null
-        const minutesLeft = resetTime ? Math.ceil((resetTime - Date.now()) / 1000 / 60) : 15
+        const hoursLeft = resetTime ? Math.ceil((resetTime - Date.now()) / 1000 / 60 / 60) : 24
         
         res.status(429).json({
             success: false,
-            message: `AI rate limit exceeded. You've made ${req.rateLimit.limit} requests in the last 15 minutes.`,
-            retryAfter: `${minutesLeft} minutes`,
+            message: `Rate limit reached. ${req.rateLimit.limit} requests in 24 hours.`,
+            retryAfter: `${hoursLeft} hours`,
             limit: req.rateLimit.limit,
             remaining: req.rateLimit.remaining,
             resetTime: resetTime ? resetTime.toISOString() : null
         })
     },
     keyGenerator: (req) => {
-        
         return req.user?._id?.toString() || ipKeyGenerator(req)
     }
 })
+
 
 // File Upload: 15 uploads per 30 minutes per user
 const uploadRateLimit = rateLimit({
