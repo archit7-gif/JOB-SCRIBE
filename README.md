@@ -4,7 +4,7 @@
 
 **AI-powered Resume Optimizer & Job Application Tracker** built with the **MERN stack**.
 
-🔗 **Live Demo:** [jobscribe.vercel.app](https://jobscribe.vercel.app)
+🔗 **Live Demo:** [jobscribe.vercel.app](https://job-scribe-neon.vercel.app)
 
 ---
 
