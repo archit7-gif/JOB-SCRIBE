@@ -80,7 +80,6 @@ Upload your resume and paste a job description to get:
 
 ---
 
-## 🚀 Quick Start
 
 ### 🧩 Prerequisites
 - Node.js **v16+**
