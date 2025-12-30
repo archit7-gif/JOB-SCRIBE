@@ -2,89 +2,106 @@
 
 # 🎯 JobScribe
 
-**AI-powered Resume Optimizer & Job Application Tracker** built with the **MERN stack**.
+### AI Resume Optimizer & Job Application Tracker
 
-🔗 **Live Demo:** [jobscribe.vercel.app](https://job-scribe-neon.vercel.app)
-
----
-
-## 📖 What is JobScribe?
-
-**JobScribe** helps job seekers **analyze, improve, and track** their resumes using **AI (Google Gemini)** to increase interview success rates.  
-It bridges the gap between **generic resumes** and **targeted job descriptions**, giving data-driven insights and automation.
-
-### 💡 Problem it Solves
-
-- Generic resumes that fail to match specific job requirements  
-- Difficulty managing multiple job applications  
-- No clarity on why resumes get rejected  
-- Time-consuming manual optimization for each job  
+🔗 **Live Demo:** [https://jobscribe.vercel.app](https://jobscribe.vercel.app)
 
 ---
 
-## ✨ Core Features
+## 🚀 Overview
+
+**JobScribe** is a **full-stack MERN application** that helps job seekers **analyze resumes, optimize them for specific job descriptions, and track job applications in one place**.
+
+It combines **AI-assisted resume evaluation** with a **structured job-tracking system**, solving both resume quality and application management problems together.
+
+---
+
+## 🎯 What Problem It Solves
+
+* Generic resumes that fail ATS screening
+* No clear feedback on resume weaknesses
+* Manual resume editing for every job
+* Poor tracking of job applications and interviews
+
+---
+
+## ✨ Key Features
 
 ### 🤖 AI Resume Analysis
-Upload your resume and paste a job description to get:
 
-- 📊 **Match Score (0–100%)**
-- 💪 **Strengths** identified in your resume
-- 🧠 **Improvement Suggestions** for better alignment
-- 🧩 **Missing Keywords** to add
-- 📄 **Sections to Improve**
-
----
+* Resume + job description analysis using **Google Gemini**
+* Match score (0–100%)
+* Missing keywords & improvement suggestions
+* Section-wise feedback (skills, experience, summary)
 
 ### ✍️ Resume Optimization
 
-- AI rewrites and tailors your resume automatically  
-- Integrates **keywords naturally** for ATS compatibility  
-- Generates **optimized versions** ready for download  
-- Uses **Gemini AI** with caching to avoid rate-limit issues  
+* AI-assisted resume rewriting
+* ATS-friendly keyword integration
+* Optimized resumes ready for download
+* Caching to reduce repeated AI calls and rate-limit issues
+
+### 💼 Job Application Tracker
+
+* Track applications by status:
+  **Saved → Applied → Interview → Offer / Rejected**
+* Store company details and job descriptions
+* Visual status indicators for quick review
+
+### 📝 Notes & Interview Prep
+
+* Save interview notes and company research
+* Organize preparation per application
 
 ---
 
-### 💼 Application Tracking
-
-- Track applications across all stages:  
-  `Saved → Applied → Interview → Offer/Rejected`
-- Store company details & job descriptions  
-- Add personal notes and deadlines  
-- Monitor progress with visual indicators  
-
----
-
-### 📝 Notes Management
-
-- Store interview prep materials & company research  
-- Save potential Q&A and follow-up notes  
-- Easily search, edit, and organize for future interviews  
-
----
-
-## 🛠️ Technology Stack
+## 🧰 Tech Stack (Clear & Direct)
 
 ### 🖥️ Frontend
-- **React 18** with **Redux Toolkit** (state management)
-- **React Router** for navigation
-- **Axios** for API communication
-- **React Toastify** for notifications
-- Responsive **Dark/Light Mode** support
+
+* React.js
+* Redux Toolkit
+* React Router
+* Axios
 
 ### ⚙️ Backend
-- **Node.js + Express.js**
-- **MongoDB** with **Mongoose ODM**
-- **JWT Authentication** + **bcrypt**
-- **Google Gemini AI** API integration
-- **Rate Limiting**, **File Uploads**, and **Caching**
+
+* Node.js
+* Express.js
+* MongoDB (Mongoose)
+* JWT Authentication + bcrypt
+
+### 🤖 AI & Utilities
+
+* Google Gemini API
+* File uploads
+* Rate limiting & caching
 
 ---
 
+## 🏗️ Architecture (High Level)
 
-### 🧩 Prerequisites
-- Node.js **v16+**
-- MongoDB Atlas account
-- Google AI API Key
+```
+React Client
+     │
+ REST APIs
+     ▼
+Node.js + Express Backend
+     │
+MongoDB (Data Storage)
+     │
+Google Gemini (AI Analysis)
+```
+
+---
+
+## 👤 Author
+
+**Archit Pandey** Full-Stack Developer (MERN)
+
+
+
+
 
 
 
