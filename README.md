@@ -4,7 +4,7 @@
 
 ### AI Resume Optimizer & Job Application Tracker
 
-🔗 **Live Demo:** [https://jobscribe.vercel.app](https://jobscribe.vercel.app)
+🔗 **Live Demo:** [https://jobscribe.vercel.app](https://job-scribe-neon.vercel.app)
 
 ---
 
