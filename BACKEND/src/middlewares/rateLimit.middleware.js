@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit')
+const { ipKeyGenerator } = require('express-rate-limit') 
 
 // 5 login attempts per 15 minutes
 const loginRateLimit = rateLimit({
@@ -43,7 +44,7 @@ const aiAnalysisRateLimit = rateLimit({
         })
     },
     keyGenerator: (req) => {
-        return req.user?._id?.toString() || req.ip // ✅ FIX
+        return req.user?._id?.toString() || ipKeyGenerator(req) 
     }
 })
 
@@ -66,7 +67,7 @@ const uploadRateLimit = rateLimit({
         })
     },
     keyGenerator: (req) => {
-        return req.user?._id?.toString() || req.ip // ✅ FIX
+        return req.user?._id?.toString() || ipKeyGenerator(req) // ✅ FIX
     }
 })
 
