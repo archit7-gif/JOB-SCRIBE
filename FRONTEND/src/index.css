@@ -1,8 +1,4 @@
 
-/* ============================================
-   JOBSCRIBE — GLOBAL STYLES v2
-   Design System: Refined Professional SaaS
-   ============================================ */
 
 /* Google Fonts Import */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
@@ -37,9 +33,6 @@ body {
   flex-direction: column;
 }
 
-/* ============================================
-   DESIGN TOKENS — DARK MODE (Default)
-   ============================================ */
 
 :root {
   /* Surfaces */
