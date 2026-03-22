@@ -1,11 +1,9 @@
-
-
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { IoPersonAdd, IoEye, IoEyeOff } from 'react-icons/io5'
+import { IoPersonAddOutline, IoEye, IoEyeOff } from 'react-icons/io5'
 import Button from '../../components/common/Button'
 import { loginStart, loginSuccess, loginFailure } from '../../redux/slices/authSlice'
 import { validationRules } from '../../utils/validators'
@@ -24,27 +22,16 @@ const Register = () => {
   const onSubmit = async (data) => {
     try {
       dispatch(loginStart())
-      
       const registerData = {
-        fullname: {
-          firstname: data.firstname,
-          lastname: data.lastname
-        },
+        fullname: { firstname: data.firstname, lastname: data.lastname },
         email: data.email,
-        password: data.password
+        password: data.password,
       }
-
       const response = await authService.register(registerData)
-      
       if (response.success) {
         dispatch(loginSuccess(response))
         toast.success('Account created successfully!')
-        
-        if (response.user.role === 'admin') {
-          navigate('/admin')
-        } else {
-          navigate('/dashboard')
-        }
+        navigate(response.user.role === 'admin' ? '/admin' : '/dashboard')
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed'
@@ -57,9 +44,14 @@ const Register = () => {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-card">
+          <Link to="/" className="auth-logo">
+            <img src="/logo-icon.svg" alt="JobScribe" className="auth-logo-img" />
+            <span className="auth-logo-name">JobScribe</span>
+          </Link>
+
           <div className="auth-header">
-            <h1 className="auth-title">Create Account</h1>
-            <p className="auth-subtitle">Start your job search journey</p>
+            <h1 className="auth-title">Create your account</h1>
+            <p className="auth-subtitle">Start your job search journey today</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="auth-form" noValidate>
@@ -74,7 +66,6 @@ const Register = () => {
                 />
                 {errors.firstname && <span className="form-error">{errors.firstname.message}</span>}
               </div>
-
               <div className="form-group">
                 <label className="form-label">Last Name</label>
                 <input
@@ -109,12 +100,7 @@ const Register = () => {
                   placeholder="At least 8 characters"
                   autoComplete="new-password"
                 />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  tabIndex="-1"
-                >
+                <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)} tabIndex="-1">
                   {showPassword ? <IoEyeOff /> : <IoEye />}
                 </button>
               </div>
@@ -131,32 +117,22 @@ const Register = () => {
                   placeholder="Re-enter password"
                   autoComplete="new-password"
                 />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  tabIndex="-1"
-                >
+                <button type="button" className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)} tabIndex="-1">
                   {showConfirmPassword ? <IoEyeOff /> : <IoEye />}
                 </button>
               </div>
               {errors.confirmPassword && <span className="form-error">{errors.confirmPassword.message}</span>}
             </div>
 
-            <Button 
-              type="submit" 
-              variant="primary" 
-              loading={loading} 
-              fullWidth
-              icon={<IoPersonAdd />}
-            >
+            <Button type="submit" variant="primary" loading={loading} fullWidth icon={<IoPersonAddOutline />}>
               Create Account
             </Button>
           </form>
 
           <div className="auth-footer">
             <p className="auth-footer-text">
-              Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
+              Already have an account?{' '}
+              <Link to="/login" className="auth-link">Sign in</Link>
             </p>
           </div>
         </div>

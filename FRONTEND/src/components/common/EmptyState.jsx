@@ -1,4 +1,3 @@
-
 import Button from './Button'
 import './EmptyState.css'
 
@@ -9,7 +8,7 @@ const EmptyState = ({ icon, title, message, actionText, onAction }) => {
       <h3 className="empty-state-title">{title}</h3>
       <p className="empty-state-message">{message}</p>
       {actionText && onAction && (
-        <Button onClick={onAction} variant="primary">
+        <Button onClick={onAction} variant="primary" size="small">
           {actionText}
         </Button>
       )}

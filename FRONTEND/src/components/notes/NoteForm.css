@@ -1,17 +1,85 @@
 
-
 .note-form {
-  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
 }
 
+.note-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.note-form .form-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Label row with char counter on right */
 .form-label-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .char-count {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  font-weight: 400;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.note-form .form-input,
+.note-form .form-select,
+.note-form .form-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s !important;
+}
+
+.note-form .form-input:focus,
+.note-form .form-select:focus,
+.note-form .form-textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
+
+.note-form .form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238892a4' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+  cursor: pointer;
+}
+
+.note-form .form-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Tall textarea for note content */
+.note-form .form-textarea {
+  resize: vertical;
+  min-height: 260px;
+  line-height: 1.7;
+}
+
+.note-form .form-input-error {
+  border-color: var(--color-danger) !important;
+}
+
+.note-form .form-error {
+  font-size: 0.75rem;
+  color: var(--color-danger);
 }

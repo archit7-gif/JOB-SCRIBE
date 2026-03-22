@@ -1,38 +1,44 @@
 
-
 .add-job-page {
-  padding: 2rem;
-  max-width: 900px;
+  padding: 2rem 2rem 3rem;
+  max-width: 720px;
   margin: 0 auto;
+  animation: slideUp 0.3s ease;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
 .add-job-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
   padding: 2rem;
+  box-shadow: var(--shadow-sm);
 }
 
+/* Title + subtitle at top of card */
 .form-page-title {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
   color: var(--color-text);
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.25rem 0;
+  letter-spacing: -0.03em;
 }
 
 .form-page-subtitle {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--color-text-secondary);
-  margin: 0 0 2rem 0;
+  margin: 0 0 1.5rem 0;
 }
 
 @media (max-width: 768px) {
-  .add-job-page {
-    padding: 1rem;
-  }
-
-  .add-job-card {
-    padding: 1.5rem;
-  }
-
-  .form-page-title {
-    font-size: 1.5rem;
-  }
+  .add-job-page { padding: 1.25rem; }
+  .add-job-card { padding: 1.25rem; }
 }

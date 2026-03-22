@@ -1,37 +1,32 @@
-
-
 import { NavLink } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { 
-  IoGrid, 
-  IoBriefcase, 
-  IoDocument, 
-  IoCreate, 
-  IoPerson,
-  IoShield,
-  IoLogOut
+import {
+  IoGridOutline,
+  IoBriefcaseOutline,
+  IoDocumentTextOutline,
+  IoCreateOutline,
+  IoPersonOutline,
+  IoShieldCheckmarkOutline,
+  IoLogOutOutline,
 } from 'react-icons/io5'
 import './Sidebar.css'
 
 const Sidebar = ({ isOpen, onClose, onLogout }) => {
   const { user } = useSelector((state) => state.auth)
 
-  // Admin only sees Dashboard and Profile
   const adminMenuItems = [
-    { path: '/admin', icon: <IoShield />, label: 'Admin Dashboard' },
-    { path: '/profile', icon: <IoPerson />, label: 'Profile' }
+    { path: '/admin', icon: <IoShieldCheckmarkOutline />, label: 'Admin Dashboard' },
+    { path: '/profile', icon: <IoPersonOutline />, label: 'Profile' },
   ]
 
-  // Regular users see all menu items
   const userMenuItems = [
-    { path: '/dashboard', icon: <IoGrid />, label: 'Dashboard' },
-    { path: '/jobs', icon: <IoBriefcase />, label: 'Jobs' },
-    { path: '/resumes', icon: <IoDocument />, label: 'Resumes' },
-    { path: '/notes', icon: <IoCreate />, label: 'Notes' },
-    { path: '/profile', icon: <IoPerson />, label: 'Profile' }
+    { path: '/dashboard', icon: <IoGridOutline />, label: 'Dashboard' },
+    { path: '/jobs', icon: <IoBriefcaseOutline />, label: 'Jobs' },
+    { path: '/resumes', icon: <IoDocumentTextOutline />, label: 'Resumes' },
+    { path: '/notes', icon: <IoCreateOutline />, label: 'Notes' },
+    { path: '/profile', icon: <IoPersonOutline />, label: 'Profile' },
   ]
 
-  // Choose menu items based on role
   const menuItems = user?.role === 'admin' ? adminMenuItems : userMenuItems
 
   return (
@@ -42,7 +37,8 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => 
+              end={item.path === '/dashboard' || item.path === '/admin'}
+              className={({ isActive }) =>
                 `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`
               }
               onClick={onClose}
@@ -51,20 +47,19 @@ const Sidebar = ({ isOpen, onClose, onLogout }) => {
               <span className="sidebar-label">{item.label}</span>
             </NavLink>
           ))}
-
-          <button className="sidebar-link sidebar-logout" onClick={onLogout}>
-            <span className="sidebar-icon"><IoLogOut /></span>
-            <span className="sidebar-label">Logout</span>
-          </button>
         </nav>
+
+        <div className="sidebar-bottom">
+          <button className="sidebar-link sidebar-logout" onClick={onLogout}>
+            <span className="sidebar-icon"><IoLogOutOutline /></span>
+            <span className="sidebar-label">Sign Out</span>
+          </button>
+        </div>
       </aside>
-      
-      {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
+
+      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
     </>
   )
 }
 
 export default Sidebar
-
-
-

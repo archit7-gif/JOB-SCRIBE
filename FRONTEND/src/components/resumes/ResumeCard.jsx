@@ -1,7 +1,5 @@
-
-
 import { useNavigate } from 'react-router-dom'
-import { IoDocument, IoCloudUpload, IoAnalytics, IoCalendarOutline } from 'react-icons/io5'
+import { IoDocumentTextOutline, IoCloudUploadOutline, IoBarChartOutline, IoCalendarOutline } from 'react-icons/io5'
 import { formatDate, formatFileSize } from '../../utils/formatters'
 import './ResumeCard.css'
 
@@ -11,42 +9,37 @@ const ResumeCard = ({ resume }) => {
 
   return (
     <div className="resume-card" onClick={() => navigate(`/resumes/${resume._id}`)}>
-      <div className="resume-card-icon">
-        {resume.type === 'file' ? (
-          <IoCloudUpload size={32} />
-        ) : (
-          <IoDocument size={32} />
-        )}
+      <div className="resume-card-header">
+        <div className="resume-card-icon">
+          {resume.type === 'file'
+            ? <IoCloudUploadOutline size={22} />
+            : <IoDocumentTextOutline size={22} />
+          }
+        </div>
+        <div className="resume-card-info">
+          <h3 className="resume-card-name">{resume.title}</h3>
+          {/* Preserve fileName display from original */}
+          {resume.type === 'file' && resume.fileName
+            ? <span className="resume-card-type">{resume.fileName}</span>
+            : <span className="resume-card-type">{resume.type === 'file' ? 'Uploaded File' : 'Text Resume'}</span>
+          }
+        </div>
       </div>
 
-      <div className="resume-card-content">
-        <h3 className="resume-card-title">{resume.title}</h3>
-        
-        <div className="resume-card-meta">
-          {resume.type === 'file' && resume.fileName && (
-            <span className="resume-meta-item">
-              {resume.fileName}
-            </span>
-          )}
-          {resume.fileSize && (
-            <span className="resume-meta-item">
-              {formatFileSize(resume.fileSize)}
-            </span>
-          )}
+      <div className="resume-card-footer">
+        <div className="resume-card-date">
+          <IoCalendarOutline size={12} />
+          <span>{formatDate(resume.updatedAt)}</span>
         </div>
-
-        <div className="resume-card-footer">
-          <div className="resume-date">
-            <IoCalendarOutline size={14} />
-            <span>{formatDate(resume.updatedAt)}</span>
-          </div>
-          {analysisCount > 0 && (
-            <div className="resume-analysis-count">
-              <IoAnalytics size={14} />
+        {resume.fileSize
+          ? <span className="resume-card-size">{formatFileSize(resume.fileSize)}</span>
+          : analysisCount > 0 && (
+            <div className="resume-card-date">
+              <IoBarChartOutline size={12} />
               <span>{analysisCount} {analysisCount === 1 ? 'analysis' : 'analyses'}</span>
             </div>
-          )}
-        </div>
+          )
+        }
       </div>
     </div>
   )

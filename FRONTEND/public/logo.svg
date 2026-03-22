@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6c5ce7"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon mark scaled to 80x80 -->
+  <g transform="scale(0.4)">
+    <rect width="200" height="200" rx="44" fill="url(#bg)"/>
+    <rect x="50" y="34" width="88" height="108" rx="9" fill="white" opacity="0.95"/>
+    <rect x="64" y="58" width="60" height="7" rx="3.5" fill="#6c5ce7" opacity="0.40"/>
+    <rect x="64" y="74" width="46" height="7" rx="3.5" fill="#6c5ce7" opacity="0.28"/>
+    <rect x="64" y="90" width="52" height="7" rx="3.5" fill="#6c5ce7" opacity="0.28"/>
+    <path d="M72 128 L96 152 L158 86" fill="none" stroke="white" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M154 90 L166 78 M154 90 L166 100" fill="none" stroke="white" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="96" y="52"
+    font-family="Outfit, system-ui, -apple-system, sans-serif"
+    font-weight="800"
+    font-size="38"
+    letter-spacing="-1.2"
+    fill="#0f1117">Job</text>
+  <text x="192" y="52"
+    font-family="Outfit, system-ui, -apple-system, sans-serif"
+    font-weight="800"
+    font-size="38"
+    letter-spacing="-1.2"
+    fill="#6c5ce7">Scribe</text>
+</svg>

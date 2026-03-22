@@ -1,20 +1,19 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import { IoPeople, IoCheckmarkCircle, IoCloseCircle } from 'react-icons/io5'
-import Card from '../../components/common/Card'
+import { IoPeopleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoShieldCheckmarkOutline } from 'react-icons/io5'
 import StatsCard from '../../components/admin/StatsCard'
 import UserTable from '../../components/admin/UserTable'
 import Modal from '../../components/common/Modal'
 import Button from '../../components/common/Button'
 import LoadingSkeleton from '../../components/common/LoadingSkeleton'
-import { 
-  setStats, 
-  setUsers, 
-  setSearch, 
+import {
+  setStats,
+  setUsers,
+  setSearch,
   updateUserStatus as updateUserStatusAction,
   removeUser,
-  setLoading 
+  setLoading
 } from '../../redux/slices/adminSlice'
 import adminService from '../../services/adminService'
 import './AdminDashboard.css'
@@ -27,10 +26,7 @@ const AdminDashboard = () => {
   const [selectedUserId, setSelectedUserId] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Filter out admin users from the list
-  const nonAdminUsers = useMemo(() => {
-    return filteredUsers.filter(u => u.role !== 'admin')
-  }, [filteredUsers])
+  const nonAdminUsers = useMemo(() => filteredUsers.filter(u => u.role !== 'admin'), [filteredUsers])
 
   useEffect(() => {
     fetchStats()
@@ -40,10 +36,8 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const response = await adminService.getStats()
-      if (response.success) {
-        dispatch(setStats(response.stats))
-      }
-    } catch (error) {
+      if (response.success) dispatch(setStats(response.stats))
+    } catch {
       toast.error('Failed to load statistics')
     }
   }
@@ -52,10 +46,8 @@ const AdminDashboard = () => {
     try {
       dispatch(setLoading(true))
       const response = await adminService.getUsers()
-      if (response.success) {
-        dispatch(setUsers(response))
-      }
-    } catch (error) {
+      if (response.success) dispatch(setUsers(response))
+    } catch {
       toast.error('Failed to load users')
     } finally {
       dispatch(setLoading(false))
@@ -96,38 +88,58 @@ const AdminDashboard = () => {
     }
   }
 
+  if (loading && !nonAdminUsers.length) {
+    return (
+      <div className="admin-page">
+        <div className="admin-stats-grid">
+          <LoadingSkeleton type="stat" count={3} />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="admin-page">
-      <div className="page-header">
+      <div className="admin-header">
         <div>
-          <h1 className="page-title">Admin Dashboard</h1>
-          <p className="page-subtitle">Manage users and monitor system</p>
+          <h1 className="admin-title">Admin Dashboard</h1>
+          <p className="admin-subtitle">Manage users and monitor system health</p>
         </div>
+        <span className="admin-badge">
+          <IoShieldCheckmarkOutline size={14} />
+          Admin
+        </span>
       </div>
 
       <div className="admin-stats-grid">
         <StatsCard
-          icon={<IoPeople />}
+          icon={<IoPeopleOutline size={22} />}
           label="Total Users"
-          value={stats.totalUsers}
-          color="#667eea"
+          value={stats.totalUsers ?? '—'}
+          color="#8b78f5"
+          bg="rgba(108,92,231,0.12)"
         />
         <StatsCard
-          icon={<IoCheckmarkCircle />}
+          icon={<IoCheckmarkCircleOutline size={22} />}
           label="Active Users"
-          value={stats.activeUsers}
-          color="var(--color-success)"
+          value={stats.activeUsers ?? '—'}
+          color="#34d399"
+          bg="rgba(16,185,129,0.12)"
         />
         <StatsCard
-          icon={<IoCloseCircle />}
+          icon={<IoCloseCircleOutline size={22} />}
           label="Inactive Users"
-          value={stats.inactiveUsers}
-          color="var(--color-danger)"
+          value={stats.inactiveUsers ?? '—'}
+          color="#f87171"
+          bg="rgba(239,68,68,0.10)"
         />
       </div>
 
-      <Card className="users-card">
-        <h2 className="users-title">User Management</h2>
+      <div className="admin-table-card">
+        <div className="admin-table-header">
+          <h2 className="admin-table-title">All Users</h2>
+          <span className="admin-table-count">{nonAdminUsers.length}</span>
+        </div>
         <UserTable
           users={nonAdminUsers}
           currentUserId={user?._id}
@@ -137,24 +149,19 @@ const AdminDashboard = () => {
           onDelete={handleDeleteClick}
           loading={loading}
         />
-      </Card>
+      </div>
 
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         title="Delete User"
-        size="small"
       >
-        <div className="delete-modal-content">
-          <p>Are you sure you want to delete this user? All their data will be permanently removed.</p>
-          <div className="modal-actions">
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDeleteUser} loading={deleting}>
-              Delete User
-            </Button>
-          </div>
+        <p style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: '1.5rem', lineHeight: 1.65 }}>
+          Are you sure you want to permanently delete this user? All their data — jobs, resumes, and notes — will be removed and cannot be recovered.
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+          <Button variant="danger" onClick={handleDeleteUser} loading={deleting}>Delete User</Button>
         </div>
       </Modal>
     </div>
@@ -162,7 +169,3 @@ const AdminDashboard = () => {
 }
 
 export default AdminDashboard
-
-
-
-

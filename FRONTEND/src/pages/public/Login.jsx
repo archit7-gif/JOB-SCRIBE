@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { IoLogIn, IoEye, IoEyeOff } from 'react-icons/io5'
+import { IoLogInOutline, IoEye, IoEyeOff } from 'react-icons/io5'
 import Button from '../../components/common/Button'
 import { loginStart, loginSuccess, loginFailure } from '../../redux/slices/authSlice'
 import { validationRules } from '../../utils/validators'
@@ -18,17 +18,12 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
 
   const onSubmit = async (data, event) => {
-    if (event) {
-      event.preventDefault()
-    }
-
+    if (event) event.preventDefault()
     try {
       dispatch(loginStart())
       const response = await authService.login(data)
-      
       if (response.success) {
         dispatch(loginSuccess(response))
-        
         if (response.user.role === 'admin') {
           toast.success(`Welcome, Admin ${response.user.fullname.firstname}!`)
           navigate('/admin')
@@ -48,9 +43,14 @@ const Login = () => {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-card">
+          <Link to="/" className="auth-logo">
+            <img src="/logo-icon.svg" alt="JobScribe" className="auth-logo-img" />
+            <span className="auth-logo-name">JobScribe</span>
+          </Link>
+
           <div className="auth-header">
-            <h1 className="auth-title">Welcome Back</h1>
-            <p className="auth-subtitle">Sign in to continue to JobScribe</p>
+            <h1 className="auth-title">Welcome back</h1>
+            <p className="auth-subtitle">Sign in to continue to your dashboard</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="auth-form" noValidate>
@@ -88,12 +88,12 @@ const Login = () => {
               {errors.password && <span className="form-error">{errors.password.message}</span>}
             </div>
 
-            <Button 
-              type="submit" 
-              variant="primary" 
-              loading={loading} 
+            <Button
+              type="submit"
+              variant="primary"
+              loading={loading}
               fullWidth
-              icon={<IoLogIn />}
+              icon={<IoLogInOutline />}
             >
               Sign In
             </Button>
@@ -101,7 +101,8 @@ const Login = () => {
 
           <div className="auth-footer">
             <p className="auth-footer-text">
-              Don't have an account? <Link to="/register" className="auth-link">Sign up</Link>
+              Don't have an account?{' '}
+              <Link to="/register" className="auth-link">Create one free</Link>
             </p>
           </div>
         </div>
@@ -111,4 +112,3 @@ const Login = () => {
 }
 
 export default Login
-

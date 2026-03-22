@@ -1,50 +1,94 @@
-
-
+/* ============================================
+   NOTE CARD
+   ============================================ */
 
 .note-card {
   background: var(--color-card-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 1.25rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s, box-shadow 0.2s, transform 0.2s !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 140px;
 }
 
 .note-card:hover {
   border-color: var(--color-border-hover);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
-.note-card-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 0.75rem 0;
+.note-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.note-card-content {
+.note-card-title {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.note-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--color-primary-dim);
+  color: var(--color-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.note-card-preview {
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
-  font-size: 0.875rem;
   line-height: 1.6;
-  margin-bottom: 1rem;
-  max-height: 120px;
+  margin: 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.note-card-content p {
-  margin: 0.5rem 0;
-}
-
 .note-card-footer {
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--color-border);
-}
-
-.note-date {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
+  justify-content: space-between;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: auto;
+}
+
+.note-card-date {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+}
+
+.note-card-job {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: var(--color-text-muted);
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

@@ -1,5 +1,3 @@
-
-
 import { useNavigate } from 'react-router-dom'
 import { IoLocationOutline, IoCalendarOutline, IoLinkOutline } from 'react-icons/io5'
 import { formatDate } from '../../utils/formatters'
@@ -20,26 +18,26 @@ const JobCard = ({ job }) => {
 
       {job.location && (
         <div className="job-card-meta">
-          <IoLocationOutline size={16} />
+          <IoLocationOutline size={13} />
           <span>{job.location}</span>
         </div>
       )}
 
       {job.description && (
         <p className="job-card-description">
-          {job.description.substring(0, 120)}
-          {job.description.length > 120 ? '...' : ''}
+          {job.description.substring(0, 110)}
+          {job.description.length > 110 ? '…' : ''}
         </p>
       )}
 
       <div className="job-card-footer">
         <div className="job-card-date">
-          <IoCalendarOutline size={14} />
+          <IoCalendarOutline size={12} />
           <span>{formatDate(job.updatedAt)}</span>
         </div>
         {job.link && (
           <div className="job-card-link">
-            <IoLinkOutline size={14} />
+            <IoLinkOutline size={12} />
             <span>View Posting</span>
           </div>
         )}

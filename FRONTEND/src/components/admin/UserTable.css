@@ -1,25 +1,40 @@
+/* ============================================
+   ADMIN USER TABLE
+   ============================================ */
+
+.user-table-wrapper {
+  overflow-x: auto;
+}
 
 .user-table {
   width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 }
 
-.user-table-header {
-  margin-bottom: 1.5rem;
+.user-table th {
+  padding: 0.75rem 1.25rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
 }
 
-.user-list {
-  display: grid;
-  gap: 1rem;
+.user-table td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
 }
 
-@media (min-width: 768px) {
-  .user-list {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.user-table tbody tr:last-child td { border-bottom: none; }
+
+.user-table tbody tr {
+  transition: background 0.12s !important;
 }
 
-@media (min-width: 1200px) {
-  .user-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+.user-table tbody tr:hover { background: var(--color-hover); }

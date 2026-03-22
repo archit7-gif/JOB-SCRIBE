@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
@@ -77,7 +76,12 @@ const ResumeDetail = () => {
   const handleUpdateResume = async (data) => {
     try {
       setUpdating(true)
-      const response = await resumeService.updateResume(id, data)
+      // Backend validateResumeText requires content — for file-type resumes the form
+      // only collects title, so pass the existing content to satisfy validation
+      const payload = selectedResume.type === 'file'
+        ? { ...data, content: selectedResume.content }
+        : data
+      const response = await resumeService.updateResume(id, payload)
       if (response.success) {
         dispatch(updateResumeAction(response.data))
         dispatch(setSelectedResume(response.data))
@@ -389,5 +393,3 @@ const handleOptimize = async (analysisId) => {
 }
 
 export default ResumeDetail
-
-

@@ -1,40 +1,17 @@
-
 import './LoadingSkeleton.css'
 
 const LoadingSkeleton = ({ type = 'card', count = 1 }) => {
-  const skeletons = Array.from({ length: count }, (_, i) => i)
+  const items = Array.from({ length: count }, (_, i) => i)
 
   if (type === 'card') {
     return (
       <>
-        {skeletons.map((i) => (
+        {items.map((i) => (
           <div key={i} className="skeleton-card">
-            <div className="skeleton-header">
-              <div className="skeleton-title"></div>
-              <div className="skeleton-badge"></div>
-            </div>
-            <div className="skeleton-line"></div>
-            <div className="skeleton-line short"></div>
-            <div className="skeleton-footer">
-              <div className="skeleton-tag"></div>
-              <div className="skeleton-tag"></div>
-            </div>
-          </div>
-        ))}
-      </>
-    )
-  }
-
-  if (type === 'list') {
-    return (
-      <>
-        {skeletons.map((i) => (
-          <div key={i} className="skeleton-list-item">
-            <div className="skeleton-circle"></div>
-            <div className="skeleton-list-content">
-              <div className="skeleton-line"></div>
-              <div className="skeleton-line short"></div>
-            </div>
+            <div className="skeleton skeleton-card-title" />
+            <div className="skeleton skeleton-card-line" />
+            <div className="skeleton skeleton-card-line" />
+            <div className="skeleton skeleton-card-line" />
           </div>
         ))}
       </>
@@ -44,17 +21,34 @@ const LoadingSkeleton = ({ type = 'card', count = 1 }) => {
   if (type === 'stat') {
     return (
       <>
-        {skeletons.map((i) => (
+        {items.map((i) => (
           <div key={i} className="skeleton-stat">
-            <div className="skeleton-number"></div>
-            <div className="skeleton-label"></div>
+            <div className="skeleton skeleton-stat-icon" />
+            <div className="skeleton-stat-body">
+              <div className="skeleton skeleton-stat-value" />
+              <div className="skeleton skeleton-stat-label" />
+            </div>
           </div>
         ))}
       </>
     )
   }
 
-  return <div className="skeleton-block"></div>
+  if (type === 'block') {
+    return <div className="skeleton skeleton-block" />
+  }
+
+  if (type === 'text') {
+    return (
+      <>
+        {items.map((i) => (
+          <div key={i} className="skeleton skeleton-text" />
+        ))}
+      </>
+    )
+  }
+
+  return <div className="skeleton skeleton-block" />
 }
 
 export default LoadingSkeleton
